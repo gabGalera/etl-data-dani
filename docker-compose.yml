@@ -33,6 +33,8 @@ services:
         DB_PASSWORD: etl
         DB_NAME: etl_data
     volumes:
+      - ./etl-data-back:/app
+      - /app/node_modules
       - ./dados:/dados:ro
     depends_on:
       mysql:
@@ -48,6 +50,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 40s
     restart: unless-stopped
 
 volumes:

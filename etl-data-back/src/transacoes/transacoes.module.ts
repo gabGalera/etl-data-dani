@@ -10,4 +10,5 @@ import { TransacoesController } from './transacoes.controller.js';
   controllers: [TransacoesController],
   providers: [ImportarTransacoesService],
 })
+
 export class TransacoesModule {}

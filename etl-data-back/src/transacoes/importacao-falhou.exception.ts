@@ -1,12 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import type { ErroRegistrado } from '../erros/erros.service.js';
-
-export type ArquivoImportado = {
-  arquivo: string;
-  inseridas: number;
-  atualizadas: number;
-  ignoradas: number;
-};
+import type { ErroRegistrado } from '../erros/dto/erro-registrado.dto.js';
+import type { ArquivoImportado } from './dto/importar-transacoes.dto.js';
 
 export class ImportacaoFalhouException extends HttpException {
   constructor(arquivos: ArquivoImportado[], erros: ErroRegistrado[]) {

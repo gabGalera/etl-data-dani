@@ -4,11 +4,13 @@ import path from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { ErrosService, type ErroRegistrado } from '../erros/erros.service.js';
-import {
-  ImportacaoFalhouException,
-  type ArquivoImportado,
-} from './importacao-falhou.exception.js';
+import type { ErroRegistrado } from '../erros/dto/erro-registrado.dto.js';
+import { ErrosService } from '../erros/erros.service.js';
+import type {
+  ArquivoImportado,
+  ImportacaoResultado,
+} from './dto/importar-transacoes.dto.js';
+import { ImportacaoFalhouException } from './importacao-falhou.exception.js';
 import {
   LinhaInvalida,
   parseTransacoesCsv,
@@ -17,7 +19,7 @@ import {
 import { Transacao } from './transacao.model.js';
 
 const PREFIXO = 'transacoes_';
-const PATH_INVALIDO = 'path deve ser um diretorio absoluto';
+const PATH_INVALIDO = 'path deve ser um diretorio';
 
 const UPDATE_ON_DUPLICATE: (keyof Transacao)[] = [
   'cliente',
@@ -39,13 +41,6 @@ const UPDATE_ON_DUPLICATE: (keyof Transacao)[] = [
   'updatedAt',
 ];
 
-export type ImportacaoResultado = {
-  arquivos: ArquivoImportado[];
-  inseridas: number;
-  atualizadas: number;
-  ignoradas: number;
-};
-
 class FalhaDeArquivo extends Error {
   constructor(
     readonly linha: number | null,
@@ -65,7 +60,7 @@ export class ImportarTransacoesService {
   ) {}
 
   async executar(body: unknown): Promise<ImportacaoResultado> {
-    const pasta = await this.pastaAbsoluta(body);
+    const pasta = await this.pastaDoPedido(body);
     const arquivosEncontrados = await this.listar(pasta);
     const arquivos: ArquivoImportado[] = [];
     const erros: ErroRegistrado[] = [];
@@ -99,21 +94,22 @@ export class ImportarTransacoesService {
     };
   }
 
-  private async pastaAbsoluta(body: unknown): Promise<string> {
+  private async pastaDoPedido(body: unknown): Promise<string> {
     if (typeof body !== 'object' || body === null || Array.isArray(body)) {
       throw new BadRequestException(PATH_INVALIDO);
     }
     const pedido = body as { path?: unknown };
-    if (typeof pedido.path !== 'string' || !path.isAbsolute(pedido.path)) {
+    if (typeof pedido.path !== 'string' || pedido.path.trim() === '') {
       throw new BadRequestException(PATH_INVALIDO);
     }
 
+    const pasta = path.resolve(pedido.path);
     try {
-      const info = await stat(pedido.path);
+      const info = await stat(pasta);
       if (!info.isDirectory()) {
         throw new BadRequestException(PATH_INVALIDO);
       }
-      await access(pedido.path, constants.R_OK);
+      await access(pasta, constants.R_OK);
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -121,7 +117,7 @@ export class ImportarTransacoesService {
       throw new BadRequestException(PATH_INVALIDO);
     }
 
-    return pedido.path;
+    return pasta;
   }
 
   private async listar(pasta: string): Promise<string[]> {

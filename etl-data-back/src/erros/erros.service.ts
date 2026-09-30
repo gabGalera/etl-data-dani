@@ -1,13 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
+import type { ErroRegistrado } from './dto/erro-registrado.dto.js';
 import { Erro } from './erro.model.js';
-
-export type ErroRegistrado = {
-  id: number;
-  arquivo: string;
-  linha: number | null;
-  mensagem: string;
-};
 
 @Injectable()
 export class ErrosService {

@@ -227,12 +227,31 @@ describe('POST /transacoes/importar', () => {
     expect(await transacao.findByPk(910020)).toBeNull();
   });
 
-  it('returns 400 when path is not an absolute directory', async () => {
+  it('imports a directory given as a relative path', async () => {
+    await writeCsv(pasta, 'transacoes_exemplo.csv', [row(910001, 'RUNNERS')]);
+    const relativo = path.relative(process.cwd(), pasta);
+
+    const response = await request(app.getHttpServer())
+      .post('/transacoes/importar')
+      .send({ path: relativo })
+      .expect(200);
+
+    expect(response.body.arquivos).toEqual([
+      {
+        arquivo: path.join(pasta, 'transacoes_exemplo.csv'),
+        inseridas: 1,
+        atualizadas: 0,
+        ignoradas: 0,
+      },
+    ]);
+  });
+
+  it('returns 400 when path is not a readable directory', async () => {
     await writeCsv(pasta, 'transacoes_exemplo.csv', [row(910001, 'RUNNERS')]);
 
     for (const body of [
       {},
-      { path: 'dados' },
+      { path: '' },
       { path: path.join(pasta, 'transacoes_exemplo.csv') },
       { path: path.join(pasta, 'ausente') },
     ]) {
@@ -240,7 +259,7 @@ describe('POST /transacoes/importar', () => {
         .post('/transacoes/importar')
         .send(body)
         .expect(400);
-      expect(response.body.message).toBe('path deve ser um diretorio absoluto');
+      expect(response.body.message).toBe('path deve ser um diretorio');
     }
   });
 
@@ -297,7 +316,7 @@ describe('POST /transacoes/importar', () => {
         .post('/transacoes/importar')
         .send({ path: pasta })
         .expect(400);
-      expect(response.body.message).toBe('path deve ser um diretorio absoluto');
+      expect(response.body.message).toBe('path deve ser um diretorio');
     } finally {
       await chmod(pasta, 0o700);
     }

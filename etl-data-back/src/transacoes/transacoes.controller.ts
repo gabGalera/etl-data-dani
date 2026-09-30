@@ -1,8 +1,9 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
-import {
-  ImportarTransacoesService,
-  type ImportacaoResultado,
-} from './importar-transacoes.service.js';
+import type {
+  ImportacaoResultado,
+  ImportarTransacoesDto,
+} from './dto/importar-transacoes.dto.js';
+import { ImportarTransacoesService } from './importar-transacoes.service.js';
 
 @Controller('transacoes')
 export class TransacoesController {
@@ -10,7 +11,7 @@ export class TransacoesController {
 
   @Post('importar')
   @HttpCode(200)
-  importar(@Body() body: unknown): Promise<ImportacaoResultado> {
+  importar(@Body() body: ImportarTransacoesDto): Promise<ImportacaoResultado> {
     return this.importarTransacoes.executar(body);
   }
 }

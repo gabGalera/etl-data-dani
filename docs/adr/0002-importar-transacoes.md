@@ -2,7 +2,7 @@
 
 Status: accepted
 
-`POST /transacoes/importar` receives an absolute directory path, reads every regular file whose name starts with `transacoes_`, and upserts rows on `idTransacao`. A row whose `ID Transacao` is not an integer is skipped. A file that cannot be parsed, or that repeats an id, is rolled back and recorded as an erro. The handler continues through the remaining files and, if any erro was recorded, responds 422. Good files stay committed. Files are left in place. Adquirente text is stored as exported.
+`POST /transacoes/importar` receives a directory path, absolute or relative to the process working directory, reads every regular file whose name starts with `transacoes_`, and upserts rows on `idTransacao`. A row whose `ID Transacao` is not an integer is skipped. A file that cannot be parsed, or that repeats an id, is rolled back and recorded as an erro. The handler continues through the remaining files and, if any erro was recorded, responds 422. Good files stay committed. Files are left in place. Adquirente text is stored as exported.
 
 ## Considered options
 
@@ -12,7 +12,7 @@ Status: accepted
 - Normalize `mercadopago` and `MERCADO_PAGO` to one name. We keep the export spelling.
 - Move or delete files after a successful import. We leave them, because a second run is safe.
 - Add a read endpoint for erros. This pass only writes `erros` and returns the rows saved by the failing call.
-- Accept only a path under a configured root. The process reads any absolute directory it can read. Compose mounts `./dados` read-only at `/dados`.
+- Accept only a path under a configured root. The process reads any directory it can read, absolute or relative to its working directory. Compose mounts `./dados` read-only at `/dados`.
 
 ## Consequences
 
