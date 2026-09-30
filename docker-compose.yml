@@ -1,0 +1,54 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: etl-data-mysql
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: etl_data
+      MYSQL_USER: etl
+      MYSQL_PASSWORD: etl
+    volumes:
+      - etl_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ./etl-data-back
+      dockerfile: Dockerfile
+    container_name: etl-data-app
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+        PORT: 3000
+        DB_HOST: mysql
+        DB_PORT: 3306
+        DB_USERNAME: etl
+        DB_PASSWORD: etl
+        DB_NAME: etl_data
+    volumes:
+      - ./dados:/dados:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  etl_mysql_data:
