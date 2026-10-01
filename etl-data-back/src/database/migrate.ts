@@ -12,7 +12,7 @@ import {
   CREATE_RECEBIVEIS_MIGRATION,
   RECEBIVEIS_TABLE,
   createRecebiveisTable,
-} from '../recebiveis/recebivel.schema.js';
+} from '../recebiveis/repository/recebivel.schema.js';
 import {
   CREATE_TRANSACOES_MIGRATION,
   TRANSACOES_TABLE,

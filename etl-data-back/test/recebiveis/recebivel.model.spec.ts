@@ -1,10 +1,10 @@
 import { Sequelize } from 'sequelize-typescript';
-import { Recebivel } from '../../src/recebiveis/recebivel.model.js';
+import { Recebivel } from '../../src/recebiveis/repository/recebivel.model.js';
 import {
   RECEBIVEIS_ID_TRANS_ADQUIRENTE_INDEX,
   RECEBIVEIS_TABLE,
   recebiveisAttributes,
-} from '../../src/recebiveis/recebivel.schema.js';
+} from '../../src/recebiveis/repository/recebivel.schema.js';
 
 describe('Recebivel', () => {
   const sequelize = new Sequelize({
