@@ -3,7 +3,7 @@ import type {
   ImportacaoResultado,
   ImportarTransacoesDto,
 } from './dto/importar-transacoes.dto.js';
-import { ImportarTransacoesService } from './importar-transacoes.service.js';
+import { ImportarTransacoesService } from './service/importar-transacoes.service.js';
 
 @Controller('transacoes')
 export class TransacoesController {

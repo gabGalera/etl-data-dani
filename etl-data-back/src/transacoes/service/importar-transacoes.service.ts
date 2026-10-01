@@ -4,19 +4,19 @@ import path from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import type { ErroRegistrado } from '../erros/dto/erro-registrado.dto.js';
-import { ErrosService } from '../erros/erros.service.js';
+import type { ErroRegistrado } from '../../erros/dto/erro-registrado.dto.js';
+import { ErrosService } from '../../erros/erros.service.js';
 import type {
   ArquivoImportado,
   ImportacaoResultado,
-} from './dto/importar-transacoes.dto.js';
+} from '../dto/importar-transacoes.dto.js';
+import { Transacao } from '../transacao.model.js';
 import { ImportacaoFalhouException } from './importacao-falhou.exception.js';
 import {
   LinhaInvalida,
   parseTransacoesCsv,
   type TransacaoImportada,
 } from './parse-transacoes-csv.js';
-import { Transacao } from './transacao.model.js';
 
 const PREFIXO = 'transacoes_';
 const PATH_INVALIDO = 'path deve ser um diretorio';
