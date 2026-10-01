@@ -17,7 +17,7 @@ import {
   CREATE_TRANSACOES_MIGRATION,
   TRANSACOES_TABLE,
   createTransacoesTable,
-} from '../transacoes/transacao.schema.js';
+} from '../transacoes/repository/transacao.schema.js';
 
 const META_TABLE = 'SequelizeMeta';
 

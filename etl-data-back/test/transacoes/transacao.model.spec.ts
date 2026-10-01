@@ -1,10 +1,10 @@
 import { Sequelize } from 'sequelize-typescript';
-import { Transacao } from '../../src/transacoes/transacao.model.js';
+import { Transacao } from '../../src/transacoes/repository/transacao.model.js';
 import {
   TRANSACOES_ID_TRANS_ADQUIRENTE_INDEX,
   TRANSACOES_TABLE,
   transacoesAttributes,
-} from '../../src/transacoes/transacao.schema.js';
+} from '../../src/transacoes/repository/transacao.schema.js';
 
 describe('Transacao', () => {
   const sequelize = new Sequelize({

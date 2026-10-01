@@ -10,7 +10,7 @@ import type {
   ArquivoImportado,
   ImportacaoResultado,
 } from '../dto/importar-transacoes.dto.js';
-import { Transacao } from '../transacao.model.js';
+import { Transacao } from '../repository/transacao.model.js';
 import { ImportacaoFalhouException } from './importacao-falhou.exception.js';
 import {
   LinhaInvalida,

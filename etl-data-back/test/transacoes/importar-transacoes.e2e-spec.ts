@@ -9,7 +9,7 @@ import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from '../../src/app.module.js';
 import { Erro } from '../../src/erros/erro.model.js';
-import { Transacao } from '../../src/transacoes/transacao.model.js';
+import { Transacao } from '../../src/transacoes/repository/transacao.model.js';
 
 const HEADER =
   '"ID Transacao";Cliente;Data/Hora;Adquirente;"ID Trans. Adquirente";Status;"Valor Transacao";Tipo;Parcelas;Bandeira;Aut;Cartao;"Taxa %";"Taxa Valor";"Valor Liquido";"Total Reembolsado";"Ultima Atualizacao"';
