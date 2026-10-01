@@ -1,6 +1,6 @@
 # Transacoes
 
-Payment events exported by merchants and stored for later loading into this system.
+Payment events exported by merchants and stored for later loading into this system. A payment can be split into recebiveis, one per parcela.
 
 ## Language
 
@@ -24,9 +24,13 @@ _Avoid_: Data/Hora, timestamp, createdAt
 The time of day on which the transacao happened, kept separate from data.
 _Avoid_: Data/Hora, datetime
 
+**Id da transacao**:
+The export's identifier for the payment. One transacao has one. A recebivel carries the same identifier, and several recebiveis can share it, one per parcela.
+_Avoid_: Id da transacao do adquirente, foreign key
+
 **Id da transacao do adquirente**:
-The adquirente's own identifier for the transacao. It can be missing, and more than one transacao may carry the same value.
-_Avoid_: Primary key, unique key
+The adquirente's own identifier for the payment. On a transacao it can be missing, and more than one transacao may carry the same value. On a recebivel it is always present.
+_Avoid_: Primary key, unique key, foreign key
 
 **Valor da transacao**:
 The gross amount of the transacao.
@@ -47,6 +51,30 @@ _Avoid_: Valor da transacao, total reembolsado
 **Total reembolsado**:
 The amount refunded against the transacao. It can be missing.
 _Avoid_: Valor liquido, estorno as a status
+
+**Recebivel**:
+One parcela of a payment owed to the cliente.
+_Avoid_: Transacao, repasse as the whole payment
+
+**Parcela recebivel**:
+The installment number of a recebivel, starting at 1.
+_Avoid_: Total parcelas
+
+**Total parcelas**:
+How many installments the payment was split into.
+_Avoid_: Parcela recebivel
+
+**Valor repasse**:
+The amount of a recebivel paid to the cliente.
+_Avoid_: Valor da transacao, valor liquido
+
+**Data da transacao**:
+The calendar day of the payment a recebivel comes from.
+_Avoid_: Data, data repasse
+
+**Data repasse**:
+The calendar day a recebivel is paid to the cliente.
+_Avoid_: Data da transacao, data
 
 **Erro**:
 A recorded rejection of one export file. It names the file, the line when the failure belongs to a line, and the reason. A later import appends another erro.

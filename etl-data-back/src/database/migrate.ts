@@ -9,6 +9,11 @@ import {
   createErrosTable,
 } from '../erros/erro.schema.js';
 import {
+  CREATE_RECEBIVEIS_MIGRATION,
+  RECEBIVEIS_TABLE,
+  createRecebiveisTable,
+} from '../recebiveis/recebivel.schema.js';
+import {
   CREATE_TRANSACOES_MIGRATION,
   TRANSACOES_TABLE,
   createTransacoesTable,
@@ -33,6 +38,11 @@ const migrations: Migration[] = [
     name: CREATE_ERROS_MIGRATION,
     table: ERROS_TABLE,
     create: createErrosTable,
+  },
+  {
+    name: CREATE_RECEBIVEIS_MIGRATION,
+    table: RECEBIVEIS_TABLE,
+    create: createRecebiveisTable,
   },
 ];
 
