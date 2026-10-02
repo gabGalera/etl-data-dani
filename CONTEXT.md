@@ -29,7 +29,7 @@ The export's identifier for the payment. One transacao has one. A recebivel carr
 _Avoid_: Id da transacao do adquirente, foreign key
 
 **Id da transacao do adquirente**:
-The adquirente's own identifier for the payment. On a transacao it can be missing, and more than one transacao may carry the same value. On a recebivel it is always present.
+The adquirente's own identifier for the payment. On a transacao it can be missing, and more than one transacao may carry the same value. On a recebivel and on a recebimento it is always present. The same value can appear on more than one recebimento.
 _Avoid_: Primary key, unique key, foreign key
 
 **Valor da transacao**:
@@ -75,6 +75,22 @@ _Avoid_: Data, data repasse
 **Data repasse**:
 The calendar day a recebivel is paid to the cliente.
 _Avoid_: Data da transacao, data
+
+**Recebimento**:
+One confirmed amount from the adquirente, kept as its own line in a single receipt file.
+_Avoid_: Recebivel, transacao
+
+**Linha**:
+The place of a recebimento in that receipt file. A recebimento is identified by its linha. The header line is not a recebimento.
+_Avoid_: Id da transacao do adquirente
+
+**Data recibo**:
+The calendar day the adquirente recorded the recebimento.
+_Avoid_: Data, data repasse, data da transacao
+
+**Confirmacao**:
+The signed amount the adquirente confirmed for that recebimento. A negative confirmacao reverses an earlier amount.
+_Avoid_: Valor repasse, valor liquido, valor da transacao
 
 **Erro**:
 A recorded rejection of one export file. It names the file, the line when the failure belongs to a line, and the reason. A later import appends another erro.
