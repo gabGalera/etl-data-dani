@@ -15,6 +15,7 @@ import { ImportacaoFalhouException } from './importacao-falhou.exception.js';
 import {
   LinhaInvalida,
   parseTransacoesCsv,
+  type LinhaRejeitada,
   type TransacaoImportada,
 } from './parse-transacoes-csv.js';
 
@@ -67,7 +68,17 @@ export class ImportarTransacoesService {
 
     for (const arquivo of arquivosEncontrados) {
       try {
-        arquivos.push(await this.importarArquivo(arquivo));
+        const lido = await this.importarArquivo(arquivo);
+        arquivos.push(lido.importado);
+        for (const rejeitada of lido.rejeitadas) {
+          erros.push(
+            await this.errosService.registrar(
+              arquivo,
+              rejeitada.linha,
+              rejeitada.mensagem,
+            ),
+          );
+        }
       } catch (error) {
         if (!(error instanceof FalhaDeArquivo)) {
           throw error;
@@ -132,7 +143,10 @@ export class ImportarTransacoesService {
       );
   }
 
-  private async importarArquivo(arquivo: string): Promise<ArquivoImportado> {
+  private async importarArquivo(arquivo: string): Promise<{
+    importado: ArquivoImportado;
+    rejeitadas: LinhaRejeitada[];
+  }> {
     const text = await this.ler(arquivo);
     let parsed: ReturnType<typeof parseTransacoesCsv>;
     try {
@@ -145,7 +159,10 @@ export class ImportarTransacoesService {
     }
 
     try {
-      return await this.gravar(arquivo, parsed.rows, parsed.ignoradas);
+      return {
+        importado: await this.gravar(arquivo, parsed.rows, parsed.ignoradas),
+        rejeitadas: parsed.rejeitadas,
+      };
     } catch (error) {
       if (error instanceof FalhaDeArquivo) {
         throw error;

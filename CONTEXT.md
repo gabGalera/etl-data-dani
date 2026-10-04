@@ -93,5 +93,5 @@ The signed amount the adquirente confirmed for that recebimento. A negative conf
 _Avoid_: Valor repasse, valor liquido, valor da transacao
 
 **Erro**:
-A recorded rejection of one export file. It names the file, the line when the failure belongs to a line, and the reason. A later import appends another erro.
+A recorded rejection of one export file, or of one line in it. It names the file, the line when the failure belongs to a line, and the reason. A later import appends another erro.
 _Avoid_: Exception, log

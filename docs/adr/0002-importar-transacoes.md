@@ -2,7 +2,9 @@
 
 Status: accepted
 
-`POST /transacoes/importar` receives a directory path, absolute or relative to the process working directory, reads every regular file whose name starts with `transacoes_`, and upserts rows on `idTransacao`. A row whose `ID Transacao` is not an integer is skipped. A file that cannot be parsed, or that repeats an id, is rolled back and recorded as an erro. The handler continues through the remaining files and, if any erro was recorded, responds 422. Good files stay committed. Files are left in place. Adquirente text is stored as exported.
+ADR 0007 supersedes the original rule that a bad data line, or a repeated id, rolls the file back. The rest of this decision stands.
+
+`POST /transacoes/importar` receives a directory path, absolute or relative to the process working directory, reads every regular file whose name starts with `transacoes_`, and upserts rows on `idTransacao`. A row whose `ID Transacao` is not an integer is skipped. An unreadable file or a bad header is recorded as one erro and saves nothing. The handler continues through the remaining files and, if any erro was recorded, responds 422. Good files stay committed. Files are left in place. Adquirente text is stored as exported.
 
 ## Considered options
 

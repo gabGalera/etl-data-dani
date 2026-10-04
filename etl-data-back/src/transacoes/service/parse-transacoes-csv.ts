@@ -27,9 +27,15 @@ export type TransacaoImportada = {
   totalReembolsado: string | null;
 };
 
+export type LinhaRejeitada = {
+  linha: number;
+  mensagem: string;
+};
+
 export type TransacoesParseadas = {
   rows: TransacaoImportada[];
   ignoradas: number;
+  rejeitadas: LinhaRejeitada[];
 };
 
 const HEADERS = [
@@ -84,6 +90,7 @@ export function parseTransacoesCsv(text: string): TransacoesParseadas {
   let columns: Map<string, number> | null = null;
   const seen = new Set<number>();
   const rows: TransacaoImportada[] = [];
+  const rejeitadas: LinhaRejeitada[] = [];
   let ignoradas = 0;
 
   for (let index = 0; index < lines.length; index += 1) {
@@ -93,67 +100,88 @@ export function parseTransacoesCsv(text: string): TransacoesParseadas {
       continue;
     }
 
-    const fields = parseFields(line, linha);
     if (!columns) {
-      columns = readHeader(fields);
-      continue;
-    }
-    if (fields.length !== columns.size) {
-      throw new LinhaInvalida(linha, 'Linha invalida');
-    }
-
-    const idRaw = cell(fields, columns, 'ID Transacao');
-    if (!INTEGER_ID.test(idRaw)) {
-      ignoradas += 1;
+      columns = readHeader(parseFields(line, linha));
       continue;
     }
 
-    const idTransacao = Number(idRaw);
-    if (idRaw.length > 10 || idTransacao > MAX_ID) {
-      throw new LinhaInvalida(linha, 'ID Transacao invalido');
+    try {
+      const row = readRow(parseFields(line, linha), columns, linha, seen);
+      if (row === null) {
+        ignoradas += 1;
+      } else {
+        rows.push(row);
+      }
+    } catch (error) {
+      if (!(error instanceof LinhaInvalida)) {
+        throw error;
+      }
+      rejeitadas.push({ linha: error.linha, mensagem: error.mensagem });
     }
-    if (seen.has(idTransacao)) {
-      throw new LinhaInvalida(linha, 'ID Transacao duplicado');
-    }
-    seen.add(idTransacao);
-
-    const dataHora = parseDataHora(cell(fields, columns, 'Data/Hora'), linha);
-    rows.push({
-      idTransacao,
-      cliente: requireText(fields, columns, 'Cliente', linha),
-      data: dataHora.data,
-      hora: dataHora.hora,
-      adquirente: requireText(fields, columns, 'Adquirente', linha),
-      idTransAdquirente: optionalText(
-        fields,
-        columns,
-        'ID Trans. Adquirente',
-        linha,
-      ),
-      status: requireText(fields, columns, 'Status', linha),
-      valorTransacao: requireMoney(fields, columns, 'Valor Transacao', linha),
-      tipo: requireText(fields, columns, 'Tipo', linha),
-      parcelas: parseParcelas(cell(fields, columns, 'Parcelas'), linha),
-      bandeira: optionalText(fields, columns, 'Bandeira', linha),
-      aut: optionalText(fields, columns, 'Aut', linha),
-      cartao: optionalText(fields, columns, 'Cartao', linha),
-      taxaPercentual: optionalMoney(fields, columns, 'Taxa %', linha),
-      taxaValor: optionalMoney(fields, columns, 'Taxa Valor', linha),
-      valorLiquido: optionalMoney(fields, columns, 'Valor Liquido', linha),
-      totalReembolsado: optionalMoney(
-        fields,
-        columns,
-        'Total Reembolsado',
-        linha,
-      ),
-    });
   }
 
   if (!columns) {
     throw new LinhaInvalida(1, 'Cabecalho invalido');
   }
 
-  return { rows, ignoradas };
+  return { rows, ignoradas, rejeitadas };
+}
+
+function readRow(
+  fields: string[],
+  columns: Map<string, number>,
+  linha: number,
+  seen: Set<number>,
+): TransacaoImportada | null {
+  if (fields.length !== columns.size) {
+    throw new LinhaInvalida(linha, 'Linha invalida');
+  }
+
+  const idRaw = cell(fields, columns, 'ID Transacao');
+  if (!INTEGER_ID.test(idRaw)) {
+    return null;
+  }
+
+  const idTransacao = Number(idRaw);
+  if (idRaw.length > 10 || idTransacao > MAX_ID) {
+    throw new LinhaInvalida(linha, 'ID Transacao invalido');
+  }
+  if (seen.has(idTransacao)) {
+    throw new LinhaInvalida(linha, 'ID Transacao duplicado');
+  }
+
+  const dataHora = parseDataHora(cell(fields, columns, 'Data/Hora'), linha);
+  const row: TransacaoImportada = {
+    idTransacao,
+    cliente: requireText(fields, columns, 'Cliente', linha),
+    data: dataHora.data,
+    hora: dataHora.hora,
+    adquirente: requireText(fields, columns, 'Adquirente', linha),
+    idTransAdquirente: optionalText(
+      fields,
+      columns,
+      'ID Trans. Adquirente',
+      linha,
+    ),
+    status: requireText(fields, columns, 'Status', linha),
+    valorTransacao: requireMoney(fields, columns, 'Valor Transacao', linha),
+    tipo: requireText(fields, columns, 'Tipo', linha),
+    parcelas: parseParcelas(cell(fields, columns, 'Parcelas'), linha),
+    bandeira: optionalText(fields, columns, 'Bandeira', linha),
+    aut: optionalText(fields, columns, 'Aut', linha),
+    cartao: optionalText(fields, columns, 'Cartao', linha),
+    taxaPercentual: optionalMoney(fields, columns, 'Taxa %', linha),
+    taxaValor: optionalMoney(fields, columns, 'Taxa Valor', linha),
+    valorLiquido: optionalMoney(fields, columns, 'Valor Liquido', linha),
+    totalReembolsado: optionalMoney(
+      fields,
+      columns,
+      'Total Reembolsado',
+      linha,
+    ),
+  };
+  seen.add(idTransacao);
+  return row;
 }
 
 function readHeader(fields: string[]): Map<string, number> {

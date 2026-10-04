@@ -165,6 +165,12 @@ describe('POST /transacoes/importar', () => {
           atualizadas: 0,
           ignoradas: 0,
         },
+        {
+          arquivo: path.join(pasta, 'transacoes_b_ruim.csv'),
+          inseridas: 0,
+          atualizadas: 0,
+          ignoradas: 0,
+        },
       ],
       erros: [
         {
@@ -181,10 +187,29 @@ describe('POST /transacoes/importar', () => {
       .send({ path: pasta })
       .expect(422);
 
-    expect(deNovo.body.arquivos[0]).toMatchObject({
-      inseridas: 0,
-      atualizadas: 1,
-    });
+    expect(deNovo.body.arquivos).toEqual([
+      {
+        arquivo: path.join(pasta, 'transacoes_a_ok.csv'),
+        inseridas: 0,
+        atualizadas: 1,
+        ignoradas: 0,
+      },
+      {
+        arquivo: path.join(pasta, 'transacoes_b_ruim.csv'),
+        inseridas: 0,
+        atualizadas: 0,
+        ignoradas: 0,
+      },
+    ]);
+    expect(deNovo.body.erros).toEqual([
+      {
+        id: expect.any(Number),
+        arquivo: path.join(pasta, 'transacoes_b_ruim.csv'),
+        linha: 2,
+        mensagem: 'Valor Transacao invalido',
+      },
+    ]);
+    expect(deNovo.body.erros[0].id).not.toBe(response.body.erros[0].id);
     expect(await transacao.findByPk(910011)).toBeNull();
 
     const corrigida = await mkdtemp(path.join(tmpdir(), 'transacoes-'));
@@ -205,10 +230,11 @@ describe('POST /transacoes/importar', () => {
     }
   });
 
-  it('rejects a file that repeats idTransacao and keeps none of its rows', async () => {
-    await writeCsv(pasta, 'transacoes_dup.csv', [
-      row(910020, 'RUNNERS'),
-      row(910020, 'OUTRO'),
+  it('saves the valid lines of a file and records each rejected line', async () => {
+    await writeCsv(pasta, 'transacoes_misto.csv', [
+      row(910060, 'RUNNERS'),
+      row(910061, 'RUNNERS').replace('198,00', 'nao'),
+      'Total;;;;;;"1.234,50";;;;;;;;;;',
     ]);
 
     const response = await request(app.getHttpServer())
@@ -216,6 +242,49 @@ describe('POST /transacoes/importar', () => {
       .send({ path: pasta })
       .expect(422);
 
+    expect(response.body).toEqual({
+      message: 'Falha ao importar transacoes',
+      arquivos: [
+        {
+          arquivo: path.join(pasta, 'transacoes_misto.csv'),
+          inseridas: 1,
+          atualizadas: 0,
+          ignoradas: 1,
+        },
+      ],
+      erros: [
+        {
+          id: expect.any(Number),
+          arquivo: path.join(pasta, 'transacoes_misto.csv'),
+          linha: 3,
+          mensagem: 'Valor Transacao invalido',
+        },
+      ],
+    });
+    expect((await transacao.findByPk(910060))?.cliente).toBe('RUNNERS');
+    expect(await transacao.findByPk(910061)).toBeNull();
+  });
+
+  it('keeps the first saved id and records each later copy', async () => {
+    await writeCsv(pasta, 'transacoes_dup.csv', [
+      row(910020, 'RUNNERS'),
+      row(910020, 'OUTRO').replace('198,00', 'nao'),
+      row(910020, 'TERCEIRO'),
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .post('/transacoes/importar')
+      .send({ path: pasta })
+      .expect(422);
+
+    expect(response.body.arquivos).toEqual([
+      {
+        arquivo: path.join(pasta, 'transacoes_dup.csv'),
+        inseridas: 1,
+        atualizadas: 0,
+        ignoradas: 0,
+      },
+    ]);
     expect(response.body.erros).toEqual([
       {
         id: expect.any(Number),
@@ -223,8 +292,59 @@ describe('POST /transacoes/importar', () => {
         linha: 3,
         mensagem: 'ID Transacao duplicado',
       },
+      {
+        id: expect.any(Number),
+        arquivo: path.join(pasta, 'transacoes_dup.csv'),
+        linha: 4,
+        mensagem: 'ID Transacao duplicado',
+      },
     ]);
-    expect(await transacao.findByPk(910020)).toBeNull();
+    expect((await transacao.findByPk(910020))?.cliente).toBe('RUNNERS');
+  });
+
+  it('saves a later valid row when an earlier row with that id was rejected', async () => {
+    await writeCsv(pasta, 'transacoes_depois.csv', [
+      row(910070, 'RUIM').replace('198,00', 'nao'),
+      row(910070, 'BOM'),
+      row(910071, 'TAMBEM').replace('198,00', 'nao'),
+      row(910071, 'OUTRO').replace('27/09/2026 23:32:38', 'ontem'),
+    ]);
+
+    const response = await request(app.getHttpServer())
+      .post('/transacoes/importar')
+      .send({ path: pasta })
+      .expect(422);
+
+    expect(response.body.arquivos).toEqual([
+      {
+        arquivo: path.join(pasta, 'transacoes_depois.csv'),
+        inseridas: 1,
+        atualizadas: 0,
+        ignoradas: 0,
+      },
+    ]);
+    expect(response.body.erros).toEqual([
+      {
+        id: expect.any(Number),
+        arquivo: path.join(pasta, 'transacoes_depois.csv'),
+        linha: 2,
+        mensagem: 'Valor Transacao invalido',
+      },
+      {
+        id: expect.any(Number),
+        arquivo: path.join(pasta, 'transacoes_depois.csv'),
+        linha: 4,
+        mensagem: 'Valor Transacao invalido',
+      },
+      {
+        id: expect.any(Number),
+        arquivo: path.join(pasta, 'transacoes_depois.csv'),
+        linha: 5,
+        mensagem: 'Data/Hora invalida',
+      },
+    ]);
+    expect((await transacao.findByPk(910070))?.cliente).toBe('BOM');
+    expect(await transacao.findByPk(910071)).toBeNull();
   });
 
   it('imports a directory given as a relative path', async () => {
