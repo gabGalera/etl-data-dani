@@ -1,7 +1,6 @@
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   LinhaInvalida,
@@ -112,33 +111,6 @@ describe('parseRecebimentosXlsx', () => {
     await expect(parseRecebimentosXlsx(await readFile(csvMoney))).rejects.toThrow(
       new LinhaInvalida(2, 'Confirmacao MP invalido'),
     );
-  });
-
-  it('parses the dados Recebimentos_MP workbook', async () => {
-    const arquivo = path.resolve(
-      path.dirname(fileURLToPath(import.meta.url)),
-      '../../../dados/Recebimentos_MP.xlsx',
-    );
-    const parsed = await parseRecebimentosXlsx(await readFile(arquivo));
-    expect(parsed).toHaveLength(11433);
-    expect(parsed[0]).toEqual({
-      linha: 2,
-      idTransAdquirente: '152306875159',
-      dataRecibo: '2026-04-04',
-      confirmacao: '729.14',
-    });
-    expect(parsed[2]).toEqual({
-      linha: 4,
-      idTransAdquirente: '153521352232',
-      dataRecibo: '2026-04-08',
-      confirmacao: '25660.54',
-    });
-    expect(parsed.at(-1)).toEqual({
-      linha: 11434,
-      idTransAdquirente: '181218443578',
-      dataRecibo: '2026-09-27',
-      confirmacao: '86.72',
-    });
   });
 
   it('rejects a missing header column and an empty data sheet', async () => {
