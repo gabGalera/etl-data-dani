@@ -31,7 +31,7 @@ export class Transacao extends Model {
   @Column({ type: DataType.STRING(120), allowNull: false })
   declare cliente: string;
 
-  @Column({ type: DataType.DATEONLY, allowNull: false })
+  @Column({ type: DataType.STRING(10), allowNull: false })
   declare data: string;
 
   @Column({ type: DataType.TIME, allowNull: false })

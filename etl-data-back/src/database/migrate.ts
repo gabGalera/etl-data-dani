@@ -19,8 +19,10 @@ import {
   createRecebiveisTable,
 } from '../recebiveis/repository/recebivel.schema.js';
 import {
+  ALTER_TRANSACOES_DATA_VARCHAR_MIGRATION,
   CREATE_TRANSACOES_MIGRATION,
   TRANSACOES_TABLE,
+  alterTransacoesDataToVarchar,
   createTransacoesTable,
 } from '../transacoes/repository/transacao.schema.js';
 
@@ -54,6 +56,11 @@ const migrations: Migration[] = [
     table: RECEBIMENTOS_TABLE,
     create: createRecebimentosTable,
   },
+  {
+    name: ALTER_TRANSACOES_DATA_VARCHAR_MIGRATION,
+    alter: alterTransacoesDataToVarchar,
+    message: `Changed ${TRANSACOES_TABLE}.data to VARCHAR(10).`,
+  },
 ];
 
 try {
@@ -71,8 +78,10 @@ try {
 
 type Migration = {
   name: string;
-  table: string;
-  create: (queryInterface: QueryInterface) => Promise<void>;
+  table?: string;
+  create?: (queryInterface: QueryInterface) => Promise<void>;
+  alter?: (queryInterface: QueryInterface) => Promise<void>;
+  message?: string;
 };
 
 async function applyMigrations(): Promise<string[]> {
@@ -86,19 +95,28 @@ async function applyMigrations(): Promise<string[]> {
       { replacements: { name: migration.name } },
     );
     if (Array.isArray(rows) && rows.length > 0) {
-      messages.push(
-        `Migration already applied. Table ${migration.table} was left unchanged.`,
-      );
+      const target = migration.table ?? migration.name;
+      messages.push(`Migration already applied. ${target} was left unchanged.`);
       continue;
     }
 
     const existing = tableNames(await queryInterface.showAllTables());
-    if (!existing.includes(migration.table)) {
-      await migration.create(queryInterface);
+    if (migration.create && migration.table) {
+      if (!existing.includes(migration.table)) {
+        await migration.create(queryInterface);
+      }
+    }
+    if (migration.alter) {
+      await migration.alter(queryInterface);
     }
 
     await queryInterface.bulkInsert(META_TABLE, [{ name: migration.name }]);
-    messages.push(`Created table ${migration.table}.`);
+    messages.push(
+      migration.message ??
+        (migration.table
+          ? `Created table ${migration.table}.`
+          : `Applied migration ${migration.name}.`),
+    );
   }
 
   return messages;

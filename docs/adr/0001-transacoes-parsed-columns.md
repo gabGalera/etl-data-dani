@@ -2,7 +2,7 @@
 
 Status: accepted
 
-The `transacoes` table keeps one camelCase column per field in the export files, with SQL types instead of the original text. `Data/Hora` is split into `data` (`DATE`) and `hora` (`TIME`). `Ultima Atualizacao` is not stored. Sequelize `createdAt` and `updatedAt` record when this system writes the row. The Nest app connects with `synchronize: false`. `npm run db:migrate` creates the table.
+The `transacoes` table keeps one camelCase column per field in the export files, with SQL types instead of the original text. `Data/Hora` is split into `data` (`VARCHAR(10)`, calendar day as `YYYY-MM-DD` text) and `hora` (`TIME`). `Ultima Atualizacao` is not stored. Sequelize `createdAt` and `updatedAt` record when this system writes the row. The Nest app connects with `synchronize: false`. `npm run db:migrate` creates the table.
 
 ## Considered options
 

@@ -8,6 +8,8 @@ export const TRANSACOES_TABLE = 'transacoes';
 export const TRANSACOES_ID_TRANS_ADQUIRENTE_INDEX =
   'transacoes_id_trans_adquirente';
 export const CREATE_TRANSACOES_MIGRATION = '20260928160000-create-transacoes';
+export const ALTER_TRANSACOES_DATA_VARCHAR_MIGRATION =
+  '20261005183000-transacoes-data-varchar';
 
 export const transacoesAttributes: ModelAttributes = {
   idTransacao: {
@@ -21,7 +23,7 @@ export const transacoesAttributes: ModelAttributes = {
     allowNull: false,
   },
   data: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.STRING(10),
     allowNull: false,
   },
   hora: {
@@ -99,5 +101,14 @@ export async function createTransacoesTable(
   });
   await queryInterface.addIndex(TRANSACOES_TABLE, ['idTransAdquirente'], {
     name: TRANSACOES_ID_TRANS_ADQUIRENTE_INDEX,
+  });
+}
+
+export async function alterTransacoesDataToVarchar(
+  queryInterface: QueryInterface,
+): Promise<void> {
+  await queryInterface.changeColumn(TRANSACOES_TABLE, 'data', {
+    type: DataTypes.STRING(10),
+    allowNull: false,
   });
 }

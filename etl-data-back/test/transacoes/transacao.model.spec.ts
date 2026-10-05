@@ -36,6 +36,10 @@ describe('Transacao', () => {
 
     expect(attributes.idTransacao?.primaryKey).toBe(true);
     expect(attributes.idTransacao?.autoIncrement).toBe(false);
+    expect(attributes.data?.type).toMatchObject({
+      key: 'STRING',
+      options: { length: 10 },
+    });
     expect(attributes.ultimaAtualizacao).toBeUndefined();
     expect(Transacao.options.indexes).toEqual([
       expect.objectContaining({
