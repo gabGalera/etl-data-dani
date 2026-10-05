@@ -320,11 +320,14 @@ function parseDataHora(
   value: string,
   linha: number,
 ): { data: string; hora: string } {
-  const match = DATA_HORA.exec(value);
-  if (!match) {
+  if (!DATA_HORA.test(value)) {
     throw new LinhaInvalida(linha, 'Data/Hora invalida');
   }
-  const [, day, month, year, hour, minute, second] = match;
+
+  const [datePart, timePart] = value.split(' ');
+  const [day, month, year] = datePart.split('/');
+  const [hour, minute, second] = timePart.split(':');
+
   const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
   const valid =
     date.getUTCFullYear() === Number(year) &&
@@ -336,9 +339,10 @@ function parseDataHora(
   if (!valid) {
     throw new LinhaInvalida(linha, 'Data/Hora invalida');
   }
+
   return {
     data: `${year}-${month}-${day}`,
-    hora: `${hour}:${minute}:${second}`,
+    hora: timePart,
   };
 }
 
