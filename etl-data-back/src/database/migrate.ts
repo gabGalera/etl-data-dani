@@ -9,13 +9,17 @@ import {
   createErrosTable,
 } from '../erros/erro.schema.js';
 import {
+  ALTER_RECEBIMENTOS_DATA_VARCHAR_MIGRATION,
   CREATE_RECEBIMENTOS_MIGRATION,
   RECEBIMENTOS_TABLE,
+  alterRecebimentosDataReciboToVarchar,
   createRecebimentosTable,
 } from '../recebimentos/repository/recebimento.schema.js';
 import {
+  ALTER_RECEBIVEIS_DATAS_VARCHAR_MIGRATION,
   CREATE_RECEBIVEIS_MIGRATION,
   RECEBIVEIS_TABLE,
+  alterRecebiveisDatasToVarchar,
   createRecebiveisTable,
 } from '../recebiveis/repository/recebivel.schema.js';
 import {
@@ -60,6 +64,16 @@ const migrations: Migration[] = [
     name: ALTER_TRANSACOES_DATA_VARCHAR_MIGRATION,
     alter: alterTransacoesDataToVarchar,
     message: `Changed ${TRANSACOES_TABLE}.data to VARCHAR(10).`,
+  },
+  {
+    name: ALTER_RECEBIVEIS_DATAS_VARCHAR_MIGRATION,
+    alter: alterRecebiveisDatasToVarchar,
+    message: `Changed ${RECEBIVEIS_TABLE}.dataTransacao and dataRepasse to VARCHAR(10).`,
+  },
+  {
+    name: ALTER_RECEBIMENTOS_DATA_VARCHAR_MIGRATION,
+    alter: alterRecebimentosDataReciboToVarchar,
+    message: `Changed ${RECEBIMENTOS_TABLE}.dataRecibo to VARCHAR(10).`,
   },
 ];
 

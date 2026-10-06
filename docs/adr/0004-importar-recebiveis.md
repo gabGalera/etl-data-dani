@@ -6,7 +6,7 @@ ADR 0003 stored each export line as one parcela and left loading for later. `POS
 
 ## Considered options
 
-- Extract a shared importer with transacoes. The header, the composite key, the required `idTransAdquirente`, the date-only columns, and the repeated-parcela rule differ, so this pass copies the shape and leaves transacoes alone.
+- Extract a shared importer with transacoes. The header, the composite key, the required `idTransAdquirente`, the calendar-day columns, and the repeated-parcela rule differ, so this pass copies the shape and leaves transacoes alone.
 - Fail a file when `(idTransacao, parcelaRecebivel)` repeats, as a repeated transacao id fails. Three export files repeat one parcela on the next line with the same columns. That later line is `ignoradas` and the first is kept. A later line whose parsed columns differ rolls the file back with `Recebivel duplicado`.
 - Treat an empty fee as a broken row. Both fee columns are nullable, and one parcela in the April file has both empty with repasse equal to the gross amount.
 - Accept parcela `0`. A parcela recebivel starts at 1.

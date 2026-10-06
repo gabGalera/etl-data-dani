@@ -8,6 +8,8 @@ export const RECEBIVEIS_TABLE = 'recebiveis';
 export const RECEBIVEIS_ID_TRANS_ADQUIRENTE_INDEX =
   'recebiveis_id_trans_adquirente';
 export const CREATE_RECEBIVEIS_MIGRATION = '20261001225400-create-recebiveis';
+export const ALTER_RECEBIVEIS_DATAS_VARCHAR_MIGRATION =
+  '20261006185500-recebiveis-datas-varchar';
 
 export const recebiveisAttributes: ModelAttributes = {
   idTransacao: {
@@ -39,7 +41,7 @@ export const recebiveisAttributes: ModelAttributes = {
     allowNull: false,
   },
   dataTransacao: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.STRING(10),
     allowNull: false,
   },
   valorTransacao: {
@@ -63,7 +65,7 @@ export const recebiveisAttributes: ModelAttributes = {
     allowNull: false,
   },
   dataRepasse: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.STRING(10),
     allowNull: false,
   },
   createdAt: {
@@ -85,5 +87,18 @@ export async function createRecebiveisTable(
   });
   await queryInterface.addIndex(RECEBIVEIS_TABLE, ['idTransAdquirente'], {
     name: RECEBIVEIS_ID_TRANS_ADQUIRENTE_INDEX,
+  });
+}
+
+export async function alterRecebiveisDatasToVarchar(
+  queryInterface: QueryInterface,
+): Promise<void> {
+  await queryInterface.changeColumn(RECEBIVEIS_TABLE, 'dataTransacao', {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+  });
+  await queryInterface.changeColumn(RECEBIVEIS_TABLE, 'dataRepasse', {
+    type: DataTypes.STRING(10),
+    allowNull: false,
   });
 }

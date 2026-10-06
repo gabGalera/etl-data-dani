@@ -9,6 +9,8 @@ export const RECEBIMENTOS_ID_TRANS_ADQUIRENTE_INDEX =
   'recebimentos_id_trans_adquirente';
 export const CREATE_RECEBIMENTOS_MIGRATION =
   '20261002173200-create-recebimentos';
+export const ALTER_RECEBIMENTOS_DATA_VARCHAR_MIGRATION =
+  '20261006185600-recebimentos-data-recibo-varchar';
 
 export const recebimentosAttributes: ModelAttributes = {
   linha: {
@@ -22,7 +24,7 @@ export const recebimentosAttributes: ModelAttributes = {
     allowNull: false,
   },
   dataRecibo: {
-    type: DataTypes.DATEONLY,
+    type: DataTypes.STRING(10),
     allowNull: false,
   },
   confirmacao: {
@@ -48,5 +50,14 @@ export async function createRecebimentosTable(
   });
   await queryInterface.addIndex(RECEBIMENTOS_TABLE, ['idTransAdquirente'], {
     name: RECEBIMENTOS_ID_TRANS_ADQUIRENTE_INDEX,
+  });
+}
+
+export async function alterRecebimentosDataReciboToVarchar(
+  queryInterface: QueryInterface,
+): Promise<void> {
+  await queryInterface.changeColumn(RECEBIMENTOS_TABLE, 'dataRecibo', {
+    type: DataTypes.STRING(10),
+    allowNull: false,
   });
 }

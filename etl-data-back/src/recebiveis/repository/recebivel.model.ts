@@ -49,7 +49,7 @@ export class Recebivel extends Model {
   @Column({ type: DataType.STRING(32), allowNull: false })
   declare tipo: string;
 
-  @Column({ type: DataType.DATEONLY, allowNull: false })
+  @Column({ type: DataType.STRING(10), allowNull: false })
   declare dataTransacao: string;
 
   @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })
@@ -67,7 +67,7 @@ export class Recebivel extends Model {
   @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })
   declare valorRepasse: string;
 
-  @Column({ type: DataType.DATEONLY, allowNull: false })
+  @Column({ type: DataType.STRING(10), allowNull: false })
   declare dataRepasse: string;
 
   @CreatedAt

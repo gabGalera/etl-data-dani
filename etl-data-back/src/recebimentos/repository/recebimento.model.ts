@@ -32,7 +32,7 @@ export class Recebimento extends Model {
   @Column({ type: DataType.STRING(36), allowNull: false })
   declare idTransAdquirente: string;
 
-  @Column({ type: DataType.DATEONLY, allowNull: false })
+  @Column({ type: DataType.STRING(10), allowNull: false })
   declare dataRecibo: string;
 
   @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })

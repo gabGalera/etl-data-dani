@@ -2,7 +2,7 @@
 
 Status: accepted
 
-A `recebiveis_` export line is one parcela of a payment. The `recebiveis` table keeps one camelCase column per business field, with the same SQL types as `transacoes`. The primary key is `(idTransacao, parcelaRecebivel)`. There is no surrogate key and no foreign key. `idTransacao` is the recebivel's own id. `idTransAdquirente` is `STRING(36) NOT NULL` and has a non-unique index. `taxaPercentual` and `taxaValor` allow null. Sequelize `createdAt` and `updatedAt` record when this system writes the row. `npm run db:migrate` creates the table and records `20261001225400-create-recebiveis`.
+A `recebiveis_` export line is one parcela of a payment. The `recebiveis` table keeps one camelCase column per business field, with the same SQL types as `transacoes`. The primary key is `(idTransacao, parcelaRecebivel)`. There is no surrogate key and no foreign key. `idTransacao` is the recebivel's own id. `idTransAdquirente` is `STRING(36) NOT NULL` and has a non-unique index. `dataTransacao` and `dataRepasse` are `VARCHAR(10)`, calendar days as `YYYY-MM-DD` text. `taxaPercentual` and `taxaValor` allow null. Sequelize `createdAt` and `updatedAt` record when this system writes the row. `npm run db:migrate` creates the table and records `20261001225400-create-recebiveis`, then changes the date columns and records `20261006185500-recebiveis-datas-varchar`.
 
 ## Considered options
 

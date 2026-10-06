@@ -2,7 +2,7 @@
 
 Status: accepted
 
-`Recebimentos_MP` is one file, updated in place. The `recebimentos` table stores one row per data line. The primary key is `linha`, the Excel row number, with the header on row 1 and the first recebimento on row 2. `idTransAdquirente` is `STRING(36) NOT NULL` with a non-unique index and no foreign key. `dataRecibo` is `DATEONLY`. `confirmacao` is `DECIMAL(12, 2)` and may be negative. Sequelize `createdAt` and `updatedAt` record when this system writes the row. `npm run db:migrate` creates the table and records `20261002173200-create-recebimentos`. This pass does not load the file.
+`Recebimentos_MP` is one file, updated in place. The `recebimentos` table stores one row per data line. The primary key is `linha`, the Excel row number, with the header on row 1 and the first recebimento on row 2. `idTransAdquirente` is `STRING(36) NOT NULL` with a non-unique index and no foreign key. `dataRecibo` is `VARCHAR(10)`, a calendar day as `YYYY-MM-DD` text. `confirmacao` is `DECIMAL(12, 2)` and may be negative. Sequelize `createdAt` and `updatedAt` record when this system writes the row. `npm run db:migrate` creates the table and records `20261002173200-create-recebimentos`, then changes `dataRecibo` and records `20261006185600-recebimentos-data-recibo-varchar`. This pass does not load the file.
 
 ## Considered options
 

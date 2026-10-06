@@ -41,6 +41,14 @@ describe('Recebivel', () => {
     expect(attributes.parcelaRecebivel?.autoIncrement).toBe(false);
     expect(attributes.idTransAdquirente?.allowNull).toBe(false);
     expect(attributes.idTransAdquirente?.references).toBeUndefined();
+    expect(attributes.dataTransacao?.type).toMatchObject({
+      key: 'STRING',
+      options: { length: 10 },
+    });
+    expect(attributes.dataRepasse?.type).toMatchObject({
+      key: 'STRING',
+      options: { length: 10 },
+    });
     expect(Recebivel.options.indexes).toEqual([
       expect.objectContaining({
         name: RECEBIVEIS_ID_TRANS_ADQUIRENTE_INDEX,

@@ -41,6 +41,10 @@ describe('Recebimento', () => {
     expect(attributes.idTransAdquirente?.allowNull).toBe(false);
     expect(attributes.idTransAdquirente?.references).toBeUndefined();
     expect(attributes.dataRecibo?.allowNull).toBe(false);
+    expect(attributes.dataRecibo?.type).toMatchObject({
+      key: 'STRING',
+      options: { length: 10 },
+    });
     expect(attributes.confirmacao?.allowNull).toBe(false);
     expect(Recebimento.options.indexes).toEqual([
       expect.objectContaining({
