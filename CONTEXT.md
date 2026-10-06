@@ -76,6 +76,10 @@ _Avoid_: Data, data repasse
 The calendar day a recebivel is paid to the cliente.
 _Avoid_: Data da transacao, data
 
+**Maquininha**:
+One parcela of a payment owed to the cliente when no transacao in this system carries the same id da transacao. Same business fields as a recebivel row, stored in `maquininhas` instead of `recebiveis`. Import from `recebiveis_` files will split rows by that rule in a later change.
+_Avoid_: Recebivel, transacao, duplicate recebivel
+
 **Recebimento**:
 One confirmed amount from the adquirente, kept as its own line in a single receipt file.
 _Avoid_: Recebivel, transacao

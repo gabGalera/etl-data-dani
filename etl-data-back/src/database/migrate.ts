@@ -23,6 +23,11 @@ import {
   createRecebiveisTable,
 } from '../recebiveis/repository/recebivel.schema.js';
 import {
+  CREATE_MAQUININHAS_MIGRATION,
+  MAQUININHAS_TABLE,
+  createMaquininhasTable,
+} from '../maquininhas/repository/maquininha.schema.js';
+import {
   ALTER_TRANSACOES_DATA_VARCHAR_MIGRATION,
   CREATE_TRANSACOES_MIGRATION,
   TRANSACOES_TABLE,
@@ -74,6 +79,11 @@ const migrations: Migration[] = [
     name: ALTER_RECEBIMENTOS_DATA_VARCHAR_MIGRATION,
     alter: alterRecebimentosDataReciboToVarchar,
     message: `Changed ${RECEBIMENTOS_TABLE}.dataRecibo to VARCHAR(10).`,
+  },
+  {
+    name: CREATE_MAQUININHAS_MIGRATION,
+    table: MAQUININHAS_TABLE,
+    create: createMaquininhasTable,
   },
 ];
 
