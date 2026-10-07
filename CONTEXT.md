@@ -77,7 +77,7 @@ The calendar day a recebivel is paid to the cliente.
 _Avoid_: Data da transacao, data
 
 **Maquininha**:
-One parcela of a payment owed to the cliente when no transacao in this system carries the same id da transacao. Same business fields as a recebivel row, stored in `maquininhas` instead of `recebiveis`. Import from `recebiveis_` files will split rows by that rule in a later change.
+One parcela of a payment owed to the cliente when no transacao in this system carries the same id da transacao. Same business fields as a recebivel row, stored in `maquininhas` instead of `recebiveis`. A `recebiveis_` import writes the parcela to `recebiveis` when that id da transacao exists, and to `maquininhas` otherwise. Importing the transacao later moves those parcelas into `recebiveis`.
 _Avoid_: Recebivel, transacao, duplicate recebivel
 
 **Recebimento**:

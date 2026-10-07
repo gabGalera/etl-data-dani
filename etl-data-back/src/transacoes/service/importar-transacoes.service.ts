@@ -6,6 +6,7 @@ import { InjectModel } from '@nestjs/sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import type { ErroRegistrado } from '../../erros/dto/erro-registrado.dto.js';
 import { ErrosService } from '../../erros/erros.service.js';
+import { RotearParcelaRecebivelService } from '../../maquininhas/service/rotear-parcela-recebivel.service.js';
 import type {
   ArquivoImportado,
   ImportacaoResultado,
@@ -56,6 +57,7 @@ export class ImportarTransacoesService {
   constructor(
     @InjectModel(Transacao)
     private readonly transacao: typeof Transacao,
+    private readonly rotear: RotearParcelaRecebivelService,
     private readonly errosService: ErrosService,
     private readonly sequelize: Sequelize,
   ) {}
@@ -204,6 +206,7 @@ export class ImportarTransacoesService {
             transaction,
           },
         );
+        await this.rotear.moverParaRecebiveis(ids, transaction);
       }
 
       return {

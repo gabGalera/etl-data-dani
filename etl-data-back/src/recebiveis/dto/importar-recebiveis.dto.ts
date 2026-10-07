@@ -2,11 +2,17 @@ export type ImportarRecebiveisDto = {
   path: string;
 };
 
+export type ContagemMaquininhas = {
+  inseridas: number;
+  atualizadas: number;
+};
+
 export type ArquivoImportado = {
   arquivo: string;
   inseridas: number;
   atualizadas: number;
   ignoradas: number;
+  maquininhas: ContagemMaquininhas;
 };
 
 export type ImportacaoResultado = {
@@ -14,4 +20,6 @@ export type ImportacaoResultado = {
   inseridas: number;
   atualizadas: number;
   ignoradas: number;
+  maquininhasInseridas: number;
+  maquininhasAtualizadas: number;
 };

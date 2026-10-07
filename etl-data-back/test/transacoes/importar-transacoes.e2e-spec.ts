@@ -9,6 +9,8 @@ import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from '../../src/app.module.js';
 import { Erro } from '../../src/erros/erro.model.js';
+import { Maquininha } from '../../src/maquininhas/repository/maquininha.model.js';
+import { Recebivel } from '../../src/recebiveis/repository/recebivel.model.js';
 import { Transacao } from '../../src/transacoes/repository/transacao.model.js';
 
 const HEADER =
@@ -19,6 +21,8 @@ const IDS = { [Op.between]: [910001, 910099] };
 describe('POST /transacoes/importar', () => {
   let app: INestApplication<App>;
   let transacao: typeof Transacao;
+  let recebivel: typeof Recebivel;
+  let maquininha: typeof Maquininha;
   let erro: typeof Erro;
   let pasta: string;
 
@@ -30,6 +34,8 @@ describe('POST /transacoes/importar', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     transacao = app.get(getModelToken(Transacao));
+    recebivel = app.get(getModelToken(Recebivel));
+    maquininha = app.get(getModelToken(Maquininha));
     erro = app.get(getModelToken(Erro));
   });
 
@@ -476,7 +482,76 @@ describe('POST /transacoes/importar', () => {
     expect(response.body).toMatchObject({ inseridas: 1, atualizadas: 1 });
     expect((await transacao.findByPk(910050))?.cliente).toBe('SEGUNDO');
   });
+
+  it('moves maquininhas of the imported ids into recebiveis', async () => {
+    await maquininha.destroy({ where: { idTransacao: 910090 } });
+    await recebivel.destroy({ where: { idTransacao: 910090 } });
+    try {
+      await maquininha.bulkCreate([
+        parcelaMaquininha(910090, 1, 'PARCELA 1'),
+        parcelaMaquininha(910090, 2, 'PARCELA 2'),
+      ]);
+      await writeCsv(pasta, 'transacoes_move.csv', [row(910090, 'RUNNERS')]);
+
+      const response = await request(app.getHttpServer())
+        .post('/transacoes/importar')
+        .send({ path: pasta })
+        .expect(200);
+
+      expect(response.body).toMatchObject({ inseridas: 1, atualizadas: 0 });
+      expect(await maquininha.count({ where: { idTransacao: 910090 } })).toBe(
+        0,
+      );
+      const parcelas = await recebivel.findAll({
+        where: { idTransacao: 910090 },
+        order: [['parcelaRecebivel', 'ASC']],
+      });
+      expect(parcelas.map((item) => item.cliente)).toEqual([
+        'PARCELA 1',
+        'PARCELA 2',
+      ]);
+    } finally {
+      await maquininha.destroy({ where: { idTransacao: 910090 } });
+      await recebivel.destroy({ where: { idTransacao: 910090 } });
+    }
+  });
 });
+
+function parcelaMaquininha(
+  idTransacao: number,
+  parcelaRecebivel: number,
+  cliente: string,
+): {
+  idTransacao: number;
+  parcelaRecebivel: number;
+  cliente: string;
+  adquirente: string;
+  idTransAdquirente: string;
+  tipo: string;
+  dataTransacao: string;
+  valorTransacao: string;
+  totalParcelas: number;
+  taxaPercentual: null;
+  taxaValor: null;
+  valorRepasse: string;
+  dataRepasse: string;
+} {
+  return {
+    idTransacao,
+    parcelaRecebivel,
+    cliente,
+    adquirente: 'mercadopago',
+    idTransAdquirente: '181226583096',
+    tipo: 'PIX',
+    dataTransacao: '2026-09-27',
+    valorTransacao: '10.00',
+    totalParcelas: 2,
+    taxaPercentual: null,
+    taxaValor: null,
+    valorRepasse: '10.00',
+    dataRepasse: '2026-10-02',
+  };
+}
 
 function row(id: number, cliente: string, valor = '198,00'): string {
   return `${id};${cliente};"27/09/2026 23:32:38";mercadopago;181226583096;Pago;${valor};"Cartao de Credito";3;visa;229989;"**** 7389";4,74;-9,39;188,61;;"27/09/2026 23:33:01"`;
