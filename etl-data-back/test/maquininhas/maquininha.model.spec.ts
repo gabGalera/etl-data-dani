@@ -37,15 +37,9 @@ describe('Maquininha', () => {
     expect(attributes.idTransacao?.primaryKey).toBe(true);
     expect(attributes.idTransacao?.autoIncrement).toBe(false);
     expect(attributes.idTransacao?.references).toBeUndefined();
-    expect(attributes.parcelaRecebivel?.primaryKey).toBe(true);
-    expect(attributes.parcelaRecebivel?.autoIncrement).toBe(false);
-    expect(attributes.idTransAdquirente?.allowNull).toBe(false);
+    expect(attributes.idTransAdquirente?.allowNull).toBe(true);
     expect(attributes.idTransAdquirente?.references).toBeUndefined();
-    expect(attributes.dataTransacao?.type).toMatchObject({
-      key: 'STRING',
-      options: { length: 10 },
-    });
-    expect(attributes.dataRepasse?.type).toMatchObject({
+    expect(attributes.data?.type).toMatchObject({
       key: 'STRING',
       options: { length: 10 },
     });

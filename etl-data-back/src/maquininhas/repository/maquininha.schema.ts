@@ -9,17 +9,13 @@ export const MAQUININHAS_ID_TRANS_ADQUIRENTE_INDEX =
   'maquininhas_id_trans_adquirente';
 export const CREATE_MAQUININHAS_MIGRATION =
   '20261006193000-create-maquininhas';
+export const RECREATE_MAQUININHAS_TRANSACOES_SHAPE_MIGRATION =
+  '20261012130000-maquininhas-transacoes-shape';
 
-/** Same column contract as `recebiveis`; kept separate so each table can diverge later. */
+/** Same column contract as `transacoes`; kept separate so each table can diverge later. */
 export const maquininhasAttributes: ModelAttributes = {
   idTransacao: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    primaryKey: true,
-    autoIncrement: false,
-  },
-  parcelaRecebivel: {
-    type: DataTypes.SMALLINT,
     allowNull: false,
     primaryKey: true,
     autoIncrement: false,
@@ -28,29 +24,49 @@ export const maquininhasAttributes: ModelAttributes = {
     type: DataTypes.STRING(120),
     allowNull: false,
   },
+  data: {
+    type: DataTypes.STRING(10),
+    allowNull: false,
+  },
+  hora: {
+    type: DataTypes.TIME,
+    allowNull: false,
+  },
   adquirente: {
     type: DataTypes.STRING(32),
     allowNull: false,
   },
   idTransAdquirente: {
     type: DataTypes.STRING(36),
-    allowNull: false,
+    allowNull: true,
   },
-  tipo: {
+  status: {
     type: DataTypes.STRING(32),
-    allowNull: false,
-  },
-  dataTransacao: {
-    type: DataTypes.STRING(10),
     allowNull: false,
   },
   valorTransacao: {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: false,
   },
-  totalParcelas: {
+  tipo: {
+    type: DataTypes.STRING(32),
+    allowNull: false,
+  },
+  parcelas: {
     type: DataTypes.SMALLINT,
     allowNull: false,
+  },
+  bandeira: {
+    type: DataTypes.STRING(32),
+    allowNull: true,
+  },
+  aut: {
+    type: DataTypes.STRING(16),
+    allowNull: true,
+  },
+  cartao: {
+    type: DataTypes.STRING(32),
+    allowNull: true,
   },
   taxaPercentual: {
     type: DataTypes.DECIMAL(5, 2),
@@ -60,13 +76,13 @@ export const maquininhasAttributes: ModelAttributes = {
     type: DataTypes.DECIMAL(12, 2),
     allowNull: true,
   },
-  valorRepasse: {
+  valorLiquido: {
     type: DataTypes.DECIMAL(12, 2),
-    allowNull: false,
+    allowNull: true,
   },
-  dataRepasse: {
-    type: DataTypes.STRING(10),
-    allowNull: false,
+  totalReembolsado: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
   },
   createdAt: {
     type: DataTypes.DATE,
@@ -88,4 +104,11 @@ export async function createMaquininhasTable(
   await queryInterface.addIndex(MAQUININHAS_TABLE, ['idTransAdquirente'], {
     name: MAQUININHAS_ID_TRANS_ADQUIRENTE_INDEX,
   });
+}
+
+export async function recreateMaquininhasAsTransacoesShape(
+  queryInterface: QueryInterface,
+): Promise<void> {
+  await queryInterface.dropTable(MAQUININHAS_TABLE);
+  await createMaquininhasTable(queryInterface);
 }

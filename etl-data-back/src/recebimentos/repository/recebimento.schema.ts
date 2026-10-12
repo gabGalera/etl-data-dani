@@ -11,6 +11,8 @@ export const CREATE_RECEBIMENTOS_MIGRATION =
   '20261002173200-create-recebimentos';
 export const ALTER_RECEBIMENTOS_DATA_VARCHAR_MIGRATION =
   '20261006185600-recebimentos-data-recibo-varchar';
+export const ADD_RECEBIMENTOS_PARCELA_MIGRATION =
+  '20261012130100-recebimentos-parcela';
 
 export const recebimentosAttributes: ModelAttributes = {
   linha: {
@@ -29,6 +31,10 @@ export const recebimentosAttributes: ModelAttributes = {
   },
   confirmacao: {
     type: DataTypes.DECIMAL(12, 2),
+    allowNull: false,
+  },
+  parcela: {
+    type: DataTypes.SMALLINT,
     allowNull: false,
   },
   createdAt: {
@@ -59,5 +65,15 @@ export async function alterRecebimentosDataReciboToVarchar(
   await queryInterface.changeColumn(RECEBIMENTOS_TABLE, 'dataRecibo', {
     type: DataTypes.STRING(10),
     allowNull: false,
+  });
+}
+
+export async function addRecebimentosParcela(
+  queryInterface: QueryInterface,
+): Promise<void> {
+  await queryInterface.addColumn(RECEBIMENTOS_TABLE, 'parcela', {
+    type: DataTypes.SMALLINT,
+    allowNull: false,
+    defaultValue: 1,
   });
 }

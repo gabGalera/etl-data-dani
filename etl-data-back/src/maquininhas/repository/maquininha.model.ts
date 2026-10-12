@@ -28,35 +28,42 @@ export class Maquininha extends Model {
   })
   declare idTransacao: number;
 
-  @PrimaryKey
-  @Column({
-    type: DataType.SMALLINT,
-    allowNull: false,
-    autoIncrement: false,
-  })
-  declare parcelaRecebivel: number;
-
   @Column({ type: DataType.STRING(120), allowNull: false })
   declare cliente: string;
+
+  @Column({ type: DataType.STRING(10), allowNull: false })
+  declare data: string;
+
+  @Column({ type: DataType.TIME, allowNull: false })
+  declare hora: string;
 
   @Column({ type: DataType.STRING(32), allowNull: false })
   declare adquirente: string;
 
   @Index(MAQUININHAS_ID_TRANS_ADQUIRENTE_INDEX)
-  @Column({ type: DataType.STRING(36), allowNull: false })
-  declare idTransAdquirente: string;
+  @Column({ type: DataType.STRING(36), allowNull: true })
+  declare idTransAdquirente: string | null;
 
   @Column({ type: DataType.STRING(32), allowNull: false })
-  declare tipo: string;
-
-  @Column({ type: DataType.STRING(10), allowNull: false })
-  declare dataTransacao: string;
+  declare status: string;
 
   @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })
   declare valorTransacao: string;
 
+  @Column({ type: DataType.STRING(32), allowNull: false })
+  declare tipo: string;
+
   @Column({ type: DataType.SMALLINT, allowNull: false })
-  declare totalParcelas: number;
+  declare parcelas: number;
+
+  @Column({ type: DataType.STRING(32), allowNull: true })
+  declare bandeira: string | null;
+
+  @Column({ type: DataType.STRING(16), allowNull: true })
+  declare aut: string | null;
+
+  @Column({ type: DataType.STRING(32), allowNull: true })
+  declare cartao: string | null;
 
   @Column({ type: DataType.DECIMAL(5, 2), allowNull: true })
   declare taxaPercentual: string | null;
@@ -64,11 +71,11 @@ export class Maquininha extends Model {
   @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
   declare taxaValor: string | null;
 
-  @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })
-  declare valorRepasse: string;
+  @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
+  declare valorLiquido: string | null;
 
-  @Column({ type: DataType.STRING(10), allowNull: false })
-  declare dataRepasse: string;
+  @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
+  declare totalReembolsado: string | null;
 
   @CreatedAt
   @Column({ type: DataType.DATE, allowNull: false })

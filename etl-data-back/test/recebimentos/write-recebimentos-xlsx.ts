@@ -16,6 +16,7 @@ const HEADERS = [
   'Data Recibo MP',
   'ID Trans. Adquirente',
   'Confirmacao MP',
+  'PARCELA',
 ] as const;
 
 export async function writeRecebimentosXlsx(

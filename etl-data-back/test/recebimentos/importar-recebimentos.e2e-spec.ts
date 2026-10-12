@@ -253,6 +253,7 @@ describe('POST /recebimentos/importar', () => {
     data: string,
     id: string,
     confirmacao: number,
+    parcela = 1,
   ): Parameters<typeof writeRecebimentosXlsx>[2][number] {
     return {
       linha: row,
@@ -260,6 +261,7 @@ describe('POST /recebimentos/importar', () => {
         { kind: 'text', value: data },
         { kind: 'text', value: id },
         { kind: 'number', value: confirmacao },
+        { kind: 'number', value: parcela },
       ],
     };
   }

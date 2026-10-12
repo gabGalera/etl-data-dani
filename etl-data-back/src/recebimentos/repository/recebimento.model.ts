@@ -38,6 +38,9 @@ export class Recebimento extends Model {
   @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })
   declare confirmacao: string;
 
+  @Column({ type: DataType.SMALLINT, allowNull: false })
+  declare parcela: number;
+
   @CreatedAt
   @Column({ type: DataType.DATE, allowNull: false })
   declare createdAt: Date;

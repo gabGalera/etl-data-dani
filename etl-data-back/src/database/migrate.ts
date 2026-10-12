@@ -9,9 +9,11 @@ import {
   createErrosTable,
 } from '../erros/erro.schema.js';
 import {
+  ADD_RECEBIMENTOS_PARCELA_MIGRATION,
   ALTER_RECEBIMENTOS_DATA_VARCHAR_MIGRATION,
   CREATE_RECEBIMENTOS_MIGRATION,
   RECEBIMENTOS_TABLE,
+  addRecebimentosParcela,
   alterRecebimentosDataReciboToVarchar,
   createRecebimentosTable,
 } from '../recebimentos/repository/recebimento.schema.js';
@@ -25,7 +27,9 @@ import {
 import {
   CREATE_MAQUININHAS_MIGRATION,
   MAQUININHAS_TABLE,
+  RECREATE_MAQUININHAS_TRANSACOES_SHAPE_MIGRATION,
   createMaquininhasTable,
+  recreateMaquininhasAsTransacoesShape,
 } from '../maquininhas/repository/maquininha.schema.js';
 import {
   ALTER_TRANSACOES_DATA_VARCHAR_MIGRATION,
@@ -84,6 +88,16 @@ const migrations: Migration[] = [
     name: CREATE_MAQUININHAS_MIGRATION,
     table: MAQUININHAS_TABLE,
     create: createMaquininhasTable,
+  },
+  {
+    name: RECREATE_MAQUININHAS_TRANSACOES_SHAPE_MIGRATION,
+    alter: recreateMaquininhasAsTransacoesShape,
+    message: `Recreated ${MAQUININHAS_TABLE} with the transacoes column contract.`,
+  },
+  {
+    name: ADD_RECEBIMENTOS_PARCELA_MIGRATION,
+    alter: addRecebimentosParcela,
+    message: `Added ${RECEBIMENTOS_TABLE}.parcela.`,
   },
 ];
 

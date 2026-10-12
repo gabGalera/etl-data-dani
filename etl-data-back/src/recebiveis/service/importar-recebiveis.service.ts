@@ -2,14 +2,16 @@ import { access, readdir, readFile, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import path from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import type { ErroRegistrado } from '../../erros/dto/erro-registrado.dto.js';
 import { ErrosService } from '../../erros/erros.service.js';
-import { RotearParcelaRecebivelService } from '../../maquininhas/service/rotear-parcela-recebivel.service.js';
 import type {
   ArquivoImportado,
   ImportacaoResultado,
 } from '../dto/importar-recebiveis.dto.js';
+import { Recebivel } from '../repository/recebivel.model.js';
 import { ImportacaoFalhouException } from './importacao-falhou.exception.js';
 import {
   LinhaInvalida,
@@ -19,6 +21,21 @@ import {
 
 const PREFIXO = 'recebiveis_';
 const PATH_INVALIDO = 'path deve ser um diretorio';
+
+const UPDATE_ON_DUPLICATE: (keyof Recebivel)[] = [
+  'cliente',
+  'adquirente',
+  'idTransAdquirente',
+  'tipo',
+  'dataTransacao',
+  'valorTransacao',
+  'totalParcelas',
+  'taxaPercentual',
+  'taxaValor',
+  'valorRepasse',
+  'dataRepasse',
+  'updatedAt',
+];
 
 class FalhaDeArquivo extends Error {
   constructor(
@@ -32,7 +49,8 @@ class FalhaDeArquivo extends Error {
 @Injectable()
 export class ImportarRecebiveisService {
   constructor(
-    private readonly rotear: RotearParcelaRecebivelService,
+    @InjectModel(Recebivel)
+    private readonly recebivel: typeof Recebivel,
     private readonly errosService: ErrosService,
     private readonly sequelize: Sequelize,
   ) {}
@@ -69,8 +87,6 @@ export class ImportarRecebiveisService {
       inseridas: somar(arquivos, 'inseridas'),
       atualizadas: somar(arquivos, 'atualizadas'),
       ignoradas: somar(arquivos, 'ignoradas'),
-      maquininhasInseridas: somarMaquininhas(arquivos, 'inseridas'),
-      maquininhasAtualizadas: somarMaquininhas(arquivos, 'atualizadas'),
     };
   }
 
@@ -150,13 +166,34 @@ export class ImportarRecebiveisService {
     ignoradas: number,
   ): Promise<ArquivoImportado> {
     return this.sequelize.transaction(async (transaction) => {
-      const roteado = await this.rotear.gravar(rows, transaction);
+      if (rows.length === 0) {
+        return {
+          arquivo,
+          inseridas: 0,
+          atualizadas: 0,
+          ignoradas,
+        };
+      }
+
+      const existentes = await this.recebivel.findAll({
+        attributes: ['idTransacao', 'parcelaRecebivel'],
+        where: { [Op.or]: chaves(rows) },
+        transaction,
+      });
+      const agora = new Date();
+      await this.recebivel.bulkCreate(
+        rows.map((row) => ({ ...row, updatedAt: agora })),
+        {
+          updateOnDuplicate: UPDATE_ON_DUPLICATE,
+          transaction,
+        },
+      );
+
       return {
         arquivo,
-        inseridas: roteado.recebiveis.inseridas,
-        atualizadas: roteado.recebiveis.atualizadas,
+        inseridas: rows.length - existentes.length,
+        atualizadas: existentes.length,
         ignoradas,
-        maquininhas: roteado.maquininhas,
       };
     });
   }
@@ -169,12 +206,9 @@ function somar(
   return arquivos.reduce((total, arquivo) => total + arquivo[campo], 0);
 }
 
-function somarMaquininhas(
-  arquivos: ArquivoImportado[],
-  campo: 'inseridas' | 'atualizadas',
-): number {
-  return arquivos.reduce(
-    (total, arquivo) => total + arquivo.maquininhas[campo],
-    0,
-  );
+function chaves(rows: RecebivelImportado[]): WhereOptions[] {
+  return rows.map((row) => ({
+    idTransacao: row.idTransacao,
+    parcelaRecebivel: row.parcelaRecebivel,
+  }));
 }

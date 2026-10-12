@@ -9,7 +9,6 @@ import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from '../../src/app.module.js';
 import { Erro } from '../../src/erros/erro.model.js';
-import { Maquininha } from '../../src/maquininhas/repository/maquininha.model.js';
 import { Recebivel } from '../../src/recebiveis/repository/recebivel.model.js';
 import { Transacao } from '../../src/transacoes/repository/transacao.model.js';
 
@@ -17,12 +16,9 @@ const HEADER =
   'Cliente;"ID Transacao";Adquirente;"ID Trans. Adquirente";Tipo;"Data Transacao";"Valor Transacao";"Parcela Recebivel";"Total Parcelas";"Taxa %";"Taxa Valor";"Valor Repasse";"Data Repasse"';
 
 const IDS = { [Op.between]: [920001, 920099] };
-const SEM_MAQUININHAS = { inseridas: 0, atualizadas: 0 };
-
 describe('POST /recebiveis/importar', () => {
   let app: INestApplication<App>;
   let recebivel: typeof Recebivel;
-  let maquininha: typeof Maquininha;
   let transacao: typeof Transacao;
   let erro: typeof Erro;
   let pasta: string;
@@ -35,7 +31,6 @@ describe('POST /recebiveis/importar', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     recebivel = app.get(getModelToken(Recebivel));
-    maquininha = app.get(getModelToken(Maquininha));
     transacao = app.get(getModelToken(Transacao));
     erro = app.get(getModelToken(Erro));
   });
@@ -43,7 +38,6 @@ describe('POST /recebiveis/importar', () => {
   beforeEach(async () => {
     pasta = await mkdtemp(path.join(tmpdir(), 'recebiveis-'));
     await recebivel.destroy({ where: { idTransacao: IDS } });
-    await maquininha.destroy({ where: { idTransacao: IDS } });
     await transacao.destroy({ where: { idTransacao: IDS } });
     await garantirTransacoes(transacao);
     await erro.destroy({ where: { arquivo: { [Op.startsWith]: pasta } } });
@@ -51,7 +45,6 @@ describe('POST /recebiveis/importar', () => {
 
   afterEach(async () => {
     await recebivel.destroy({ where: { idTransacao: IDS } });
-    await maquininha.destroy({ where: { idTransacao: IDS } });
     await transacao.destroy({ where: { idTransacao: IDS } });
     await erro.destroy({
       where: { arquivo: { [Op.startsWith]: pasta } },
@@ -111,14 +104,11 @@ describe('POST /recebiveis/importar', () => {
           inseridas: 4,
           atualizadas: 0,
           ignoradas: 1,
-          maquininhas: SEM_MAQUININHAS,
         },
       ],
       inseridas: 4,
       atualizadas: 0,
       ignoradas: 1,
-      maquininhasInseridas: 0,
-      maquininhasAtualizadas: 0,
     });
 
     const primeira = await parcela(recebivel, 920001, 1);
@@ -252,7 +242,6 @@ describe('POST /recebiveis/importar', () => {
           inseridas: 1,
           atualizadas: 0,
           ignoradas: 0,
-          maquininhas: SEM_MAQUININHAS,
         },
       ],
       erros: [
@@ -343,7 +332,6 @@ describe('POST /recebiveis/importar', () => {
         inseridas: 1,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
     ]);
   });
@@ -390,7 +378,6 @@ describe('POST /recebiveis/importar', () => {
         inseridas: 1,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
     ]);
     expect(await parcela(recebivel, 920050, 1)).toBeNull();
@@ -410,8 +397,6 @@ describe('POST /recebiveis/importar', () => {
         inseridas: 0,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhasInseridas: 0,
-        maquininhasAtualizadas: 0,
       });
     } finally {
       await rm(vazia, { recursive: true, force: true });
@@ -472,7 +457,7 @@ describe('POST /recebiveis/importar', () => {
     expect((await parcela(recebivel, 920070, 1))?.cliente).toBe('SEGUNDO');
   });
 
-  it('stores a parcela without a transacao in maquininhas', async () => {
+  it('stores recebiveis even when no transacao exists', async () => {
     await transacao.destroy({ where: { idTransacao: 920081 } });
     await writeCsv(pasta, 'recebiveis_exemplo.csv', [
       linha({ idTransacao: 920081, cliente: 'SEM TRANSACAO' }),
@@ -483,50 +468,20 @@ describe('POST /recebiveis/importar', () => {
       .send({ path: pasta })
       .expect(200);
 
-    expect(response.body).toMatchObject({
-      inseridas: 0,
-      atualizadas: 0,
-      maquininhasInseridas: 1,
-      maquininhasAtualizadas: 0,
-      arquivos: [
-        {
-          inseridas: 0,
-          atualizadas: 0,
-          maquininhas: { inseridas: 1, atualizadas: 0 },
-        },
-      ],
-    });
-    expect(await parcela(recebivel, 920081, 1)).toBeNull();
-    expect((await parcela(maquininha, 920081, 1))?.cliente).toBe(
+    expect(response.body).toMatchObject({ inseridas: 1, atualizadas: 0 });
+    expect((await parcela(recebivel, 920081, 1))?.cliente).toBe(
       'SEM TRANSACAO',
     );
   });
 
-  it('writes to recebiveis when the transacao already exists and updates on reimport', async () => {
-    await transacao.destroy({ where: { idTransacao: 920082 } });
-    await writeTransacaoCsv(pasta, 'transacoes_exemplo.csv', [920082]);
-
-    await request(app.getHttpServer())
-      .post('/transacoes/importar')
-      .send({ path: pasta })
-      .expect(200);
-
+  it('updates recebiveis on reimport', async () => {
     await writeCsv(pasta, 'recebiveis_exemplo.csv', [
-      linha({ idTransacao: 920082, cliente: 'COM TRANSACAO' }),
+      linha({ idTransacao: 920082, cliente: 'PRIMEIRA' }),
     ]);
-    const primeira = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .post('/recebiveis/importar')
       .send({ path: pasta })
       .expect(200);
-
-    expect(primeira.body).toMatchObject({
-      inseridas: 1,
-      maquininhasInseridas: 0,
-    });
-    expect(await parcela(maquininha, 920082, 1)).toBeNull();
-    expect((await parcela(recebivel, 920082, 1))?.cliente).toBe(
-      'COM TRANSACAO',
-    );
 
     await writeCsv(pasta, 'recebiveis_exemplo.csv', [
       linha({ idTransacao: 920082, cliente: 'ATUALIZADA' }),
@@ -539,19 +494,16 @@ describe('POST /recebiveis/importar', () => {
     expect(segunda.body).toMatchObject({
       inseridas: 0,
       atualizadas: 1,
-      maquininhasInseridas: 0,
-      maquininhasAtualizadas: 0,
     });
     expect((await parcela(recebivel, 920082, 1))?.cliente).toBe('ATUALIZADA');
-    expect(await parcela(maquininha, 920082, 1)).toBeNull();
   });
 });
 
 function parcela(
-  modelo: typeof Recebivel | typeof Maquininha,
+  modelo: typeof Recebivel,
   idTransacao: number,
   parcelaRecebivel: number,
-): Promise<Recebivel | Maquininha | null> {
+): Promise<Recebivel | null> {
   return modelo.findOne({ where: { idTransacao, parcelaRecebivel } });
 }
 

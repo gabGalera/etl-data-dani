@@ -16,13 +16,18 @@ export type RecebimentoImportado = {
   idTransAdquirente: string;
   dataRecibo: string;
   confirmacao: string;
+  parcela: number;
 };
 
 const HEADERS = [
   'Data Recibo MP',
   'ID Trans. Adquirente',
   'Confirmacao MP',
+  'PARCELA',
 ] as const;
+
+const INTEGER_ID = /^\d+$/;
+const MAX_PARCELA = 32767;
 
 const DATA_TEXTO = /^(\d{2})-(\d{2})-(\d{4})$/;
 const DINHEIRO_TEXTO = /^-?\d+(\.\d+)?$/;
@@ -205,6 +210,7 @@ function lerRecebimento(row: ParsedRow): RecebimentoImportado {
     dataRecibo: dataRecibo(row.cells.get(1), row.linha),
     idTransAdquirente: idTransAdquirente(row.cells.get(2), row.linha),
     confirmacao: confirmacao(row.cells.get(3), row.linha),
+    parcela: parcela(row.cells.get(4), row.linha),
   };
 }
 
@@ -252,6 +258,27 @@ function idTransAdquirente(
     throw new LinhaInvalida(linha, 'ID Trans. Adquirente invalido');
   }
   return text;
+}
+
+function parcela(
+  value: string | number | null | undefined,
+  linha: number,
+): number {
+  if (value === null || value === undefined || value === '') {
+    throw new LinhaInvalida(linha, 'PARCELA obrigatorio');
+  }
+  const text = String(value).trim();
+  if (text === '') {
+    throw new LinhaInvalida(linha, 'PARCELA obrigatorio');
+  }
+  if (!INTEGER_ID.test(text)) {
+    throw new LinhaInvalida(linha, 'PARCELA invalida');
+  }
+  const numero = Number(text);
+  if (numero > MAX_PARCELA) {
+    throw new LinhaInvalida(linha, 'PARCELA invalida');
+  }
+  return numero;
 }
 
 function confirmacao(

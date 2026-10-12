@@ -27,6 +27,7 @@ describe('parseRecebimentosXlsx', () => {
           { kind: 'text', value: '04-04-2026' },
           { kind: 'text', value: '152306875159' },
           { kind: 'number', value: 4188.1899999999996 },
+          { kind: 'number', value: 1 },
         ],
       },
       {
@@ -35,6 +36,7 @@ describe('parseRecebimentosXlsx', () => {
           { kind: 'text', value: ' 27-09-2026 ' },
           { kind: 'text', value: '181218443578' },
           { kind: 'number', value: -76.97 },
+          { kind: 'number', value: 1 },
         ],
       },
     ]);
@@ -46,12 +48,14 @@ describe('parseRecebimentosXlsx', () => {
         idTransAdquirente: '152306875159',
         dataRecibo: '2026-04-04',
         confirmacao: '4188.19',
+        parcela: 1,
       },
       {
         linha: 3,
         idTransAdquirente: '181218443578',
         dataRecibo: '2026-09-27',
         confirmacao: '-76.97',
+        parcela: 1,
       },
     ]);
   });
@@ -67,6 +71,7 @@ describe('parseRecebimentosXlsx', () => {
             { kind: 'number', value: 46116 },
             { kind: 'text', value: '152306875159' },
             { kind: 'text', value: '729.14' },
+            { kind: 'text', value: '1' },
           ],
         },
       ],
@@ -79,6 +84,7 @@ describe('parseRecebimentosXlsx', () => {
         idTransAdquirente: '152306875159',
         dataRecibo: '2026-04-04',
         confirmacao: '729.14',
+        parcela: 1,
       },
     ]);
   });
@@ -90,6 +96,7 @@ describe('parseRecebimentosXlsx', () => {
         cells: [
           { kind: 'text', value: '46116' },
           { kind: 'text', value: '152306875159' },
+          { kind: 'number', value: 1 },
           { kind: 'number', value: 1 },
         ],
       },
@@ -105,6 +112,7 @@ describe('parseRecebimentosXlsx', () => {
           { kind: 'text', value: '04-04-2026' },
           { kind: 'text', value: '152306875159' },
           { kind: 'text', value: '1.234,56' },
+          { kind: 'number', value: 1 },
         ],
       },
     ]);

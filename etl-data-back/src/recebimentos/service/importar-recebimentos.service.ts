@@ -11,6 +11,7 @@ import type {
   ArquivoImportado,
   ImportacaoResultado,
 } from '../dto/importar-recebimentos.dto.js';
+import { RotearTransacaoMaquininhaService } from '../../maquininhas/service/rotear-transacao-maquininha.service.js';
 import { Recebimento } from '../repository/recebimento.model.js';
 import { ImportacaoFalhouException } from './importacao-falhou.exception.js';
 import {
@@ -27,6 +28,7 @@ const UPDATE_ON_DUPLICATE: (keyof Recebimento)[] = [
   'idTransAdquirente',
   'dataRecibo',
   'confirmacao',
+  'parcela',
   'updatedAt',
 ];
 
@@ -44,6 +46,7 @@ export class ImportarRecebimentosService {
   constructor(
     @InjectModel(Recebimento)
     private readonly recebimento: typeof Recebimento,
+    private readonly rotear: RotearTransacaoMaquininhaService,
     private readonly errosService: ErrosService,
     private readonly sequelize: Sequelize,
   ) {}
@@ -180,6 +183,7 @@ export class ImportarRecebimentosService {
           transaction,
         },
       );
+      await this.rotear.reclassificarAposRecebimentos(transaction);
 
       return {
         arquivo,
