@@ -32,6 +32,11 @@ import {
   recreateMaquininhasAsTransacoesShape,
 } from '../maquininhas/repository/maquininha.schema.js';
 import {
+  CREATE_REPASSES_MIGRATION,
+  REPASSES_TABLE,
+  createRepassesTable,
+} from '../repasses/repository/repasse.schema.js';
+import {
   ALTER_TRANSACOES_DATA_VARCHAR_MIGRATION,
   CREATE_TRANSACOES_MIGRATION,
   TRANSACOES_TABLE,
@@ -98,6 +103,11 @@ const migrations: Migration[] = [
     name: ADD_RECEBIMENTOS_PARCELA_MIGRATION,
     alter: addRecebimentosParcela,
     message: `Added ${RECEBIMENTOS_TABLE}.parcela.`,
+  },
+  {
+    name: CREATE_REPASSES_MIGRATION,
+    table: REPASSES_TABLE,
+    create: createRepassesTable,
   },
 ];
 
