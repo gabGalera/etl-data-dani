@@ -44,7 +44,6 @@ const HEADERS = [
   'Data Repasse',
 ] as const;
 
-const HEADER_SET = new Set<string>(HEADERS);
 const INTEGER_ID = /^\d+$/;
 const MONEY = /^-?\d{1,3}(\.\d{3})*,\d{2}$/;
 const DATA = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -84,7 +83,7 @@ const CAMPOS: (keyof RecebivelImportado)[] = [
 export function parseRecebiveisCsv(text: string): RecebiveisParseados {
   const csv = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
   const lines = csv.split('\n');
-  let columns: Map<string, number> | null = null;
+  let header: CabecalhoRecebiveis | null = null;
   const seen = new Map<string, RecebivelImportado>();
   const rows: RecebivelImportado[] = [];
   let ignoradas = 0;
@@ -97,15 +96,15 @@ export function parseRecebiveisCsv(text: string): RecebiveisParseados {
     }
 
     const fields = parseFields(line, linha);
-    if (!columns) {
-      columns = readHeader(fields);
+    if (!header) {
+      header = readHeader(fields);
       continue;
     }
-    if (fields.length !== columns.size) {
+    if (fields.length !== header.fieldCount) {
       throw new LinhaInvalida(linha, 'Linha invalida');
     }
 
-    const idRaw = cell(fields, columns, 'ID Transacao');
+    const idRaw = cell(fields, header.columns, 'ID Transacao');
     if (!INTEGER_ID.test(idRaw)) {
       ignoradas += 1;
       continue;
@@ -116,7 +115,7 @@ export function parseRecebiveisCsv(text: string): RecebiveisParseados {
       throw new LinhaInvalida(linha, 'ID Transacao invalido');
     }
 
-    const row = lerRecebivel(fields, columns, idTransacao, linha);
+    const row = lerRecebivel(fields, header.columns, idTransacao, linha);
     const chave = `${row.idTransacao}:${row.parcelaRecebivel}`;
     const anterior = seen.get(chave);
     if (anterior) {
@@ -130,7 +129,7 @@ export function parseRecebiveisCsv(text: string): RecebiveisParseados {
     rows.push(row);
   }
 
-  if (!columns) {
+  if (!header) {
     throw new LinhaInvalida(1, 'Cabecalho invalido');
   }
 
@@ -188,19 +187,26 @@ function mesmoRecebivel(
   return CAMPOS.every((campo) => left[campo] === right[campo]);
 }
 
-function readHeader(fields: string[]): Map<string, number> {
+type CabecalhoRecebiveis = {
+  columns: Map<string, number>;
+  fieldCount: number;
+};
+
+function readHeader(fields: string[]): CabecalhoRecebiveis {
   const columns = new Map<string, number>();
   fields.forEach((field, index) => {
     const name = field.trim();
-    if (columns.has(name) || !HEADER_SET.has(name)) {
+    if (columns.has(name)) {
       throw new LinhaInvalida(1, 'Cabecalho invalido');
     }
     columns.set(name, index);
   });
-  if (columns.size !== HEADERS.length) {
-    throw new LinhaInvalida(1, 'Cabecalho invalido');
+  for (const header of HEADERS) {
+    if (!columns.has(header)) {
+      throw new LinhaInvalida(1, 'Cabecalho invalido');
+    }
   }
-  return columns;
+  return { columns, fieldCount: fields.length };
 }
 
 function parseFields(line: string, linha: number): string[] {
