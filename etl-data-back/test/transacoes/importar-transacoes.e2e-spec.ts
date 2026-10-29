@@ -19,7 +19,7 @@ const HEADER =
 
 const IDS = { [Op.between]: [910001, 910099] };
 const IDS_RECEBIMENTO = ['181226583096', '180197844653'];
-const SEM_MAQUININHAS = { inseridas: 0, atualizadas: 0 };
+const LINHAS_TESTE = { [Op.between]: [900_000, 999_999] };
 
 describe('POST /transacoes/importar', () => {
   let app: INestApplication<App>;
@@ -47,14 +47,14 @@ describe('POST /transacoes/importar', () => {
   beforeEach(async () => {
     pasta = await mkdtemp(path.join(tmpdir(), 'transacoes-'));
     await transacao.destroy({ where: { idTransacao: IDS } });
-    await maquininha.destroy({ where: { idTransacao: IDS } });
+    await maquininha.destroy({ where: LINHAS_TESTE });
     await garantirRecebimentos(recebimento, IDS_RECEBIMENTO);
     await erro.destroy({ where: { arquivo: { [Op.startsWith]: pasta } } });
   });
 
   afterEach(async () => {
     await transacao.destroy({ where: { idTransacao: IDS } });
-    await maquininha.destroy({ where: { idTransacao: IDS } });
+    await maquininha.destroy({ where: LINHAS_TESTE });
     await erro.destroy({
       where: { arquivo: { [Op.startsWith]: pasta } },
     });
@@ -84,14 +84,11 @@ describe('POST /transacoes/importar', () => {
           inseridas: 2,
           atualizadas: 0,
           ignoradas: 1,
-          maquininhas: SEM_MAQUININHAS,
         },
       ],
       inseridas: 2,
       atualizadas: 0,
       ignoradas: 1,
-      maquininhasInseridas: 0,
-      maquininhasAtualizadas: 0,
     });
 
     const cartao = await transacao.findByPk(910001);
@@ -181,14 +178,12 @@ describe('POST /transacoes/importar', () => {
           inseridas: 1,
           atualizadas: 0,
           ignoradas: 0,
-          maquininhas: SEM_MAQUININHAS,
         },
         {
           arquivo: path.join(pasta, 'transacoes_b_ruim.csv'),
           inseridas: 0,
           atualizadas: 0,
           ignoradas: 0,
-          maquininhas: SEM_MAQUININHAS,
         },
       ],
       erros: [
@@ -212,14 +207,12 @@ describe('POST /transacoes/importar', () => {
         inseridas: 0,
         atualizadas: 1,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
       {
         arquivo: path.join(pasta, 'transacoes_b_ruim.csv'),
         inseridas: 0,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
     ]);
     expect(deNovo.body.erros).toEqual([
@@ -271,7 +264,6 @@ describe('POST /transacoes/importar', () => {
           inseridas: 1,
           atualizadas: 0,
           ignoradas: 1,
-          maquininhas: SEM_MAQUININHAS,
         },
       ],
       erros: [
@@ -305,7 +297,6 @@ describe('POST /transacoes/importar', () => {
         inseridas: 1,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
     ]);
     expect(response.body.erros).toEqual([
@@ -344,7 +335,6 @@ describe('POST /transacoes/importar', () => {
         inseridas: 1,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
     ]);
     expect(response.body.erros).toEqual([
@@ -386,7 +376,6 @@ describe('POST /transacoes/importar', () => {
         inseridas: 1,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
     ]);
   });
@@ -431,7 +420,6 @@ describe('POST /transacoes/importar', () => {
         inseridas: 1,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhas: SEM_MAQUININHAS,
       },
     ]);
     expect(await transacao.findByPk(910030)).toBeNull();
@@ -449,8 +437,6 @@ describe('POST /transacoes/importar', () => {
         inseridas: 0,
         atualizadas: 0,
         ignoradas: 0,
-        maquininhasInseridas: 0,
-        maquininhasAtualizadas: 0,
       });
     } finally {
       await rm(vazia, { recursive: true, force: true });
@@ -505,7 +491,7 @@ describe('POST /transacoes/importar', () => {
     expect((await transacao.findByPk(910050))?.cliente).toBe('SEGUNDO');
   });
 
-  it('stores a transacao without recebimento in maquininhas', async () => {
+  it('stores a transacao without recebimento in transacoes', async () => {
     const linha =
       '910090;RUNNERS;"27/09/2026 23:32:38";mercadopago;999000000001;Pago;198,00;"Cartao de Credito";1;visa;229989;"**** 7389";4,74;-9,39;188,61;;"27/09/2026 23:33:01"';
     await writeCsv(pasta, 'transacoes_sem_recebimento.csv', [linha]);
@@ -516,17 +502,22 @@ describe('POST /transacoes/importar', () => {
       .expect(200);
 
     expect(response.body).toMatchObject({
-      inseridas: 0,
+      inseridas: 1,
       atualizadas: 0,
-      maquininhasInseridas: 1,
-      maquininhasAtualizadas: 0,
     });
-    expect(await transacao.findByPk(910090)).toBeNull();
-    expect((await maquininha.findByPk(910090))?.cliente).toBe('RUNNERS');
+    expect((await transacao.findByPk(910090))?.cliente).toBe('RUNNERS');
+    expect(await maquininha.findByPk(910090)).toBeNull();
   });
 
-  it('promotes a maquininha into transacoes when recebimento exists', async () => {
-    await garantirRecebimentos(recebimento, ['888000000001']);
+  it('promotes a maquininha recebimento when a matching transacao is imported', async () => {
+    await recebimento.destroy({ where: {} });
+    await maquininha.create({
+      linha: 910091,
+      idTransAdquirente: '888000000001',
+      dataRecibo: '2026-09-27',
+      confirmacao: '198.00',
+      parcela: 1,
+    });
     const linha =
       '910091;RUNNERS;"27/09/2026 23:32:38";mercadopago;888000000001;Pago;198,00;"Cartao de Credito";1;visa;229989;"**** 7389";4,74;-9,39;188,61;;"27/09/2026 23:33:01"';
     await writeCsv(pasta, 'transacoes_com_recebimento.csv', [linha]);
@@ -537,6 +528,9 @@ describe('POST /transacoes/importar', () => {
       .expect(200);
 
     expect(await maquininha.findByPk(910091)).toBeNull();
+    expect((await recebimento.findByPk(910091))?.idTransAdquirente).toBe(
+      '888000000001',
+    );
     expect((await transacao.findByPk(910091))?.cliente).toBe('RUNNERS');
   });
 });

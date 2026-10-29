@@ -19,7 +19,7 @@ The JSON adds `deletadas` on the file and on the totals, and keeps `ignoradas` a
 - Unique `(idTransAdquirente, parcela)`. Twenty-three pairs in the current file would make a strict unique index or reject-on-duplicate import fail.
 - Prefix-match `Repasse_`. That would pick up sidecar files like recebimentos.
 - Shared xlsx parser with recebimentos. Different headers and column names; copy the module as recebimentos did (ADR 0006).
-- Maquininha routing on import. Repasse does not drive transacao vs maquininha; recebimentos does (ADR 0008).
+- Maquininha routing on import. Repasse does not drive recebimento vs maquininha; recebimentos and transacoes do (ADR 0008).
 
 ## Consequences
 

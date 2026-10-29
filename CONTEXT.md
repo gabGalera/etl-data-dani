@@ -77,8 +77,8 @@ The calendar day a recebivel is paid to the cliente.
 _Avoid_: Data da transacao, data
 
 **Maquininha**:
-One transacao stored in `maquininhas` instead of `transacoes` when no recebimento in this system carries the same id da transacao do adquirente. Same business fields as a transacao row. A `transacoes_` import writes the row to `transacoes` when that id has a recebimento, and to `maquininhas` otherwise. Importing or replacing recebimentos reclassifies transacoes and maquininhas from the recebimento set. `recebimentos.parcela` is stored but does not decide maquininha routing.
-_Avoid_: Recebivel, recebimento, duplicate transacao
+One recebimento line stored in `maquininhas` instead of `recebimentos` when no transacao in this system carries the same id da transacao do adquirente. Same business fields as a recebimento row (`linha`, `dataRecibo`, `confirmacao`, `parcela`). Often that orphan is another company's terminal on the adquirente receipt, not a row in this cliente's `transacoes_` export. Importing `Recebimentos_MP` writes each line to `recebimentos` or `maquininhas` accordingly. Importing `transacoes_` loads every row into `transacoes` and may move existing maquininha rows into `recebimentos` when a matching transacao appears. A line never stays in both tables.
+_Avoid_: Transacao, recebivel, duplicate recebimento
 
 **Recebimento**:
 One confirmed amount from the adquirente, kept as its own line in a single receipt file.

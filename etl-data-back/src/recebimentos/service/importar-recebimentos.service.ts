@@ -2,17 +2,14 @@ import { access, readFile, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import path from 'node:path';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import type { ErroRegistrado } from '../../erros/dto/erro-registrado.dto.js';
 import { ErrosService } from '../../erros/erros.service.js';
+import { RotearRecebimentoMaquininhaService } from '../../maquininhas/service/rotear-recebimento-maquininha.service.js';
 import type {
   ArquivoImportado,
   ImportacaoResultado,
 } from '../dto/importar-recebimentos.dto.js';
-import { RotearTransacaoMaquininhaService } from '../../maquininhas/service/rotear-transacao-maquininha.service.js';
-import { Recebimento } from '../repository/recebimento.model.js';
 import { ImportacaoFalhouException } from './importacao-falhou.exception.js';
 import {
   LinhaInvalida,
@@ -23,14 +20,6 @@ import {
 
 const NOME = 'Recebimentos_MP.xlsx';
 const PATH_INVALIDO = 'path deve ser um diretorio';
-
-const UPDATE_ON_DUPLICATE: (keyof Recebimento)[] = [
-  'idTransAdquirente',
-  'dataRecibo',
-  'confirmacao',
-  'parcela',
-  'updatedAt',
-];
 
 class FalhaDeArquivo extends Error {
   constructor(
@@ -44,9 +33,7 @@ class FalhaDeArquivo extends Error {
 @Injectable()
 export class ImportarRecebimentosService {
   constructor(
-    @InjectModel(Recebimento)
-    private readonly recebimento: typeof Recebimento,
-    private readonly rotear: RotearTransacaoMaquininhaService,
+    private readonly rotear: RotearRecebimentoMaquininhaService,
     private readonly errosService: ErrosService,
     private readonly sequelize: Sequelize,
   ) {}
@@ -89,6 +76,8 @@ export class ImportarRecebimentosService {
       atualizadas: somar(arquivos, 'atualizadas'),
       deletadas: somar(arquivos, 'deletadas'),
       ignoradas: somar(arquivos, 'ignoradas'),
+      maquininhasInseridas: somarMaquininhas(arquivos, 'inseridas'),
+      maquininhasAtualizadas: somarMaquininhas(arquivos, 'atualizadas'),
     };
   }
 
@@ -166,31 +155,19 @@ export class ImportarRecebimentosService {
   ): Promise<ArquivoImportado> {
     return this.sequelize.transaction(async (transaction) => {
       const linhas = rows.map((row) => row.linha);
-      const existentes = await this.recebimento.findAll({
-        attributes: ['linha'],
-        where: { linha: linhas },
+      const gravado = await this.rotear.gravarRecebimentosImportados(
+        rows,
+        linhas,
         transaction,
-      });
-      const deletadas = await this.recebimento.destroy({
-        where: { linha: { [Op.notIn]: linhas } },
-        transaction,
-      });
-      const agora = new Date();
-      await this.recebimento.bulkCreate(
-        rows.map((row) => ({ ...row, updatedAt: agora })),
-        {
-          updateOnDuplicate: UPDATE_ON_DUPLICATE,
-          transaction,
-        },
       );
-      await this.rotear.reclassificarAposRecebimentos(transaction);
 
       return {
         arquivo,
-        inseridas: rows.length - existentes.length,
-        atualizadas: existentes.length,
-        deletadas,
+        inseridas: gravado.recebimentos.inseridas,
+        atualizadas: gravado.recebimentos.atualizadas,
+        deletadas: gravado.deletadas,
         ignoradas: 0,
+        maquininhas: gravado.maquininhas,
       };
     });
   }
@@ -201,4 +178,14 @@ function somar(
   campo: 'inseridas' | 'atualizadas' | 'deletadas' | 'ignoradas',
 ): number {
   return arquivos.reduce((total, arquivo) => total + arquivo[campo], 0);
+}
+
+function somarMaquininhas(
+  arquivos: ArquivoImportado[],
+  campo: 'inseridas' | 'atualizadas',
+): number {
+  return arquivos.reduce(
+    (total, arquivo) => total + arquivo.maquininhas[campo],
+    0,
+  );
 }

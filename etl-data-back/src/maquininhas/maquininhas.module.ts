@@ -3,13 +3,13 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { Recebimento } from '../recebimentos/repository/recebimento.model.js';
 import { Transacao } from '../transacoes/repository/transacao.model.js';
 import { Maquininha } from './repository/maquininha.model.js';
-import { RotearTransacaoMaquininhaService } from './service/rotear-transacao-maquininha.service.js';
+import { RotearRecebimentoMaquininhaService } from './service/rotear-recebimento-maquininha.service.js';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([Maquininha, Transacao, Recebimento]),
+    SequelizeModule.forFeature([Maquininha, Recebimento, Transacao]),
   ],
-  providers: [RotearTransacaoMaquininhaService],
-  exports: [RotearTransacaoMaquininhaService],
+  providers: [RotearRecebimentoMaquininhaService],
+  exports: [RotearRecebimentoMaquininhaService],
 })
 export class MaquininhasModule {}

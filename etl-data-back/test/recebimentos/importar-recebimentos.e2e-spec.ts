@@ -9,12 +9,19 @@ import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from '../../src/app.module.js';
 import { Erro } from '../../src/erros/erro.model.js';
+import { Maquininha } from '../../src/maquininhas/repository/maquininha.model.js';
 import { Recebimento } from '../../src/recebimentos/repository/recebimento.model.js';
+import { Transacao } from '../../src/transacoes/repository/transacao.model.js';
 import { writeRecebimentosXlsx } from './write-recebimentos-xlsx.js';
+
+const SEM_MAQUININHAS = { inseridas: 0, atualizadas: 0 };
+let proximoIdTransacao = 890_000;
 
 describe('POST /recebimentos/importar', () => {
   let app: INestApplication<App>;
   let recebimento: typeof Recebimento;
+  let maquininha: typeof Maquininha;
+  let transacao: typeof Transacao;
   let erro: typeof Erro;
   let pasta: string;
 
@@ -26,17 +33,21 @@ describe('POST /recebimentos/importar', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
     recebimento = app.get(getModelToken(Recebimento));
+    maquininha = app.get(getModelToken(Maquininha));
+    transacao = app.get(getModelToken(Transacao));
     erro = app.get(getModelToken(Erro));
   });
 
   beforeEach(async () => {
     pasta = await mkdtemp(path.join(tmpdir(), 'recebimentos-'));
     await recebimento.truncate();
+    await maquininha.truncate();
     await erro.destroy({ where: { arquivo: { [Op.startsWith]: pasta } } });
   });
 
   afterEach(async () => {
     await recebimento.truncate();
+    await maquininha.truncate();
     await erro.destroy({
       where: { arquivo: { [Op.startsWith]: pasta } },
     });
@@ -48,6 +59,8 @@ describe('POST /recebimentos/importar', () => {
   });
 
   it('stores parsed workbook rows and ignores other files', async () => {
+    await garantirTransacao(transacao, '152306875159');
+    await garantirTransacao(transacao, '181218443578');
     await writeFile(path.join(pasta, 'Recebimentos_MP_.xlsx:Zone.Identifier'), 'x');
     await writeWorkbook([
       linha(900002, '04-04-2026', '152306875159', 4188.1899999999996),
@@ -68,12 +81,15 @@ describe('POST /recebimentos/importar', () => {
           atualizadas: 0,
           deletadas: 0,
           ignoradas: 0,
+          maquininhas: SEM_MAQUININHAS,
         },
       ],
       inseridas: 2,
       atualizadas: 0,
       deletadas: 0,
       ignoradas: 0,
+      maquininhasInseridas: 0,
+      maquininhasAtualizadas: 0,
     });
 
     expect((await recebimento.findByPk(900002))?.get({ plain: true })).toMatchObject({
@@ -89,6 +105,10 @@ describe('POST /recebimentos/importar', () => {
   });
 
   it('updates an existing linha, keeps createdAt, and deletes absent linhas', async () => {
+    await garantirTransacao(transacao, 'AAA');
+    await garantirTransacao(transacao, 'BBB');
+    await garantirTransacao(transacao, 'CCC');
+    await garantirTransacao(transacao, 'DDD');
     await writeWorkbook([linha(900002, '04-04-2026', 'AAA', 10)]);
     await request(app.getHttpServer())
       .post('/recebimentos/importar')
@@ -148,6 +168,7 @@ describe('POST /recebimentos/importar', () => {
   });
 
   it('rejects an empty data sheet without deleting existing rows', async () => {
+    await garantirTransacao(transacao, 'AAA');
     await writeWorkbook([linha(900002, '04-04-2026', 'AAA', 10)]);
     await request(app.getHttpServer())
       .post('/recebimentos/importar')
@@ -173,6 +194,7 @@ describe('POST /recebimentos/importar', () => {
   });
 
   it('rolls back a bad line and records the erro', async () => {
+    await garantirTransacao(transacao, 'AAA');
     await writeWorkbook([
       linha(900002, '04-04-2026', 'AAA', 10),
       linha(900003, '08/04/2026', 'BBB', 1),
@@ -199,6 +221,7 @@ describe('POST /recebimentos/importar', () => {
   });
 
   it('imports a directory given as a relative path', async () => {
+    await garantirTransacao(transacao, 'AAA');
     await writeWorkbook([linha(900002, '04-04-2026', 'AAA', 10)]);
     const relativo = path.relative(process.cwd(), pasta);
 
@@ -214,11 +237,31 @@ describe('POST /recebimentos/importar', () => {
         atualizadas: 0,
         deletadas: 0,
         ignoradas: 0,
+        maquininhas: SEM_MAQUININHAS,
       },
     ]);
   });
 
+  it('stores recebimentos without a transacao in maquininhas', async () => {
+    await writeWorkbook([linha(900010, '04-04-2026', 'MAQUININHA-ORFA', 10)]);
+
+    const response = await request(app.getHttpServer())
+      .post('/recebimentos/importar')
+      .send({ path: pasta })
+      .expect(200);
+
+    expect(response.body).toMatchObject({
+      inseridas: 0,
+      maquininhasInseridas: 1,
+    });
+    expect(await recebimento.findByPk(900010)).toBeNull();
+    expect(
+      (await maquininha.findByPk(900010))?.idTransAdquirente,
+    ).toBe('MAQUININHA-ORFA');
+  });
+
   it('returns 400 when path is not a readable directory', async () => {
+    await garantirTransacao(transacao, 'AAA');
     await writeWorkbook([linha(900002, '04-04-2026', 'AAA', 10)]);
 
     for (const body of [
@@ -270,5 +313,37 @@ describe('POST /recebimentos/importar', () => {
     rows: Parameters<typeof writeRecebimentosXlsx>[2],
   ): Promise<string> {
     return writeRecebimentosXlsx(pasta, 'Recebimentos_MP.xlsx', rows);
+  }
+
+  async function garantirTransacao(
+    modelo: typeof Transacao,
+    idTransAdquirente: string,
+  ): Promise<void> {
+    const existente = await modelo.findOne({ where: { idTransAdquirente } });
+    if (existente) {
+      return;
+    }
+    const agora = new Date();
+    await modelo.create({
+      idTransacao: proximoIdTransacao++,
+      cliente: 'RUNNERS',
+      data: '2026-09-27',
+      hora: '23:32:38',
+      adquirente: 'mercadopago',
+      idTransAdquirente,
+      status: 'Pago',
+      valorTransacao: '198.00',
+      tipo: 'Cartao de Credito',
+      parcelas: 1,
+      bandeira: null,
+      aut: null,
+      cartao: null,
+      taxaPercentual: null,
+      taxaValor: null,
+      valorLiquido: null,
+      totalReembolsado: null,
+      createdAt: agora,
+      updatedAt: agora,
+    });
   }
 });

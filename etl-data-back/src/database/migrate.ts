@@ -28,8 +28,10 @@ import {
   CREATE_MAQUININHAS_MIGRATION,
   MAQUININHAS_TABLE,
   RECREATE_MAQUININHAS_TRANSACOES_SHAPE_MIGRATION,
+  RECREATE_MAQUININHAS_RECEBIMENTO_SHAPE_MIGRATION,
   createMaquininhasTable,
   recreateMaquininhasAsTransacoesShape,
+  recreateMaquininhasAsRecebimentoShape,
 } from '../maquininhas/repository/maquininha.schema.js';
 import {
   CREATE_REPASSES_MIGRATION,
@@ -103,6 +105,11 @@ const migrations: Migration[] = [
     name: ADD_RECEBIMENTOS_PARCELA_MIGRATION,
     alter: addRecebimentosParcela,
     message: `Added ${RECEBIMENTOS_TABLE}.parcela.`,
+  },
+  {
+    name: RECREATE_MAQUININHAS_RECEBIMENTO_SHAPE_MIGRATION,
+    alter: recreateMaquininhasAsRecebimentoShape,
+    message: `Recreated ${MAQUININHAS_TABLE} with the recebimentos column contract.`,
   },
   {
     name: CREATE_REPASSES_MIGRATION,

@@ -26,56 +26,20 @@ export class Maquininha extends Model {
     allowNull: false,
     autoIncrement: false,
   })
-  declare idTransacao: number;
-
-  @Column({ type: DataType.STRING(120), allowNull: false })
-  declare cliente: string;
-
-  @Column({ type: DataType.STRING(10), allowNull: false })
-  declare data: string;
-
-  @Column({ type: DataType.TIME, allowNull: false })
-  declare hora: string;
-
-  @Column({ type: DataType.STRING(32), allowNull: false })
-  declare adquirente: string;
+  declare linha: number;
 
   @Index(MAQUININHAS_ID_TRANS_ADQUIRENTE_INDEX)
-  @Column({ type: DataType.STRING(36), allowNull: true })
-  declare idTransAdquirente: string | null;
+  @Column({ type: DataType.STRING(36), allowNull: false })
+  declare idTransAdquirente: string;
 
-  @Column({ type: DataType.STRING(32), allowNull: false })
-  declare status: string;
+  @Column({ type: DataType.STRING(10), allowNull: false })
+  declare dataRecibo: string;
 
   @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })
-  declare valorTransacao: string;
-
-  @Column({ type: DataType.STRING(32), allowNull: false })
-  declare tipo: string;
+  declare confirmacao: string;
 
   @Column({ type: DataType.SMALLINT, allowNull: false })
-  declare parcelas: number;
-
-  @Column({ type: DataType.STRING(32), allowNull: true })
-  declare bandeira: string | null;
-
-  @Column({ type: DataType.STRING(16), allowNull: true })
-  declare aut: string | null;
-
-  @Column({ type: DataType.STRING(32), allowNull: true })
-  declare cartao: string | null;
-
-  @Column({ type: DataType.DECIMAL(5, 2), allowNull: true })
-  declare taxaPercentual: string | null;
-
-  @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
-  declare taxaValor: string | null;
-
-  @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
-  declare valorLiquido: string | null;
-
-  @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
-  declare totalReembolsado: string | null;
+  declare parcela: number;
 
   @CreatedAt
   @Column({ type: DataType.DATE, allowNull: false })

@@ -10,9 +10,9 @@ The workbook is parsed as OOXML. There is no CSV step. `jszip` unpacks the archi
 
 A missing workbook is 422 `Arquivo ausente` with `linha` null, not an empty 200. A valid header and no data rows is 422 `Arquivo vazio`. Any invalid data line fails the file; `ignoradas` is 0. Unreadable bytes are `Arquivo ilegivel`. A write failure is `Falha ao gravar`. Header and cell messages reuse the transacoes catalog (`Cabecalho invalido`, `Linha invalida`, `{header} obrigatorio`, `{header} invalido` / `invalida` for the date). The 422 message is `Falha ao importar recebimentos`.
 
-One transaction upserts on `linha`, refreshes the business columns and `updatedAt`, and keeps `createdAt`. Linhas absent from the sheet are deleted in that same transaction. The same transaction reclassifies rows between `transacoes` and `maquininhas` from the recebimento `idTransAdquirente` set (see ADR 0008). The file stays in place. Recebimentos copies the transacoes importer shape and imports `MaquininhasModule` for that reclassification.
+One transaction upserts on `linha`, refreshes the business columns and `updatedAt`, and keeps `createdAt`. Linhas absent from the sheet are deleted from `recebimentos` and `maquininhas` in that same transaction. Each line is stored in `recebimentos` when its `idTransAdquirente` exists on a transacao, and in `maquininhas` otherwise (see ADR 0008). The file stays in place. Recebimentos copies the transacoes importer shape and imports `MaquininhasModule` for that routing.
 
-The JSON adds `deletadas` on the file and on the totals, and keeps `ignoradas` as 0.
+The JSON adds `deletadas` on the file and on the totals, keeps `ignoradas` as 0, and adds `maquininhas` per file plus `maquininhasInseridas` and `maquininhasAtualizadas` on the totals.
 
 ## Considered options
 

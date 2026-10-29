@@ -5,7 +5,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
 import type { ErroRegistrado } from '../../erros/dto/erro-registrado.dto.js';
 import { ErrosService } from '../../erros/erros.service.js';
-import { RotearTransacaoMaquininhaService } from '../../maquininhas/service/rotear-transacao-maquininha.service.js';
+import { RotearRecebimentoMaquininhaService } from '../../maquininhas/service/rotear-recebimento-maquininha.service.js';
 import type {
   ArquivoImportado,
   ImportacaoResultado,
@@ -33,7 +33,7 @@ class FalhaDeArquivo extends Error {
 @Injectable()
 export class ImportarTransacoesService {
   constructor(
-    private readonly rotear: RotearTransacaoMaquininhaService,
+    private readonly rotear: RotearRecebimentoMaquininhaService,
     private readonly errosService: ErrosService,
     private readonly sequelize: Sequelize,
   ) {}
@@ -80,8 +80,6 @@ export class ImportarTransacoesService {
       inseridas: somar(arquivos, 'inseridas'),
       atualizadas: somar(arquivos, 'atualizadas'),
       ignoradas: somar(arquivos, 'ignoradas'),
-      maquininhasInseridas: somarMaquininhas(arquivos, 'inseridas'),
-      maquininhasAtualizadas: somarMaquininhas(arquivos, 'atualizadas'),
     };
   }
 
@@ -167,13 +165,15 @@ export class ImportarTransacoesService {
     ignoradas: number,
   ): Promise<ArquivoImportado> {
     return this.sequelize.transaction(async (transaction) => {
-      const roteado = await this.rotear.gravarImportacao(rows, transaction);
+      const gravado = await this.rotear.gravarTransacoesImportadas(
+        rows,
+        transaction,
+      );
       return {
         arquivo,
-        inseridas: roteado.transacoes.inseridas,
-        atualizadas: roteado.transacoes.atualizadas,
+        inseridas: gravado.inseridas,
+        atualizadas: gravado.atualizadas,
         ignoradas,
-        maquininhas: roteado.maquininhas,
       };
     });
   }
@@ -184,14 +184,4 @@ function somar(
   campo: 'inseridas' | 'atualizadas' | 'ignoradas',
 ): number {
   return arquivos.reduce((total, arquivo) => total + arquivo[campo], 0);
-}
-
-function somarMaquininhas(
-  arquivos: ArquivoImportado[],
-  campo: 'inseridas' | 'atualizadas',
-): number {
-  return arquivos.reduce(
-    (total, arquivo) => total + arquivo.maquininhas[campo],
-    0,
-  );
 }

@@ -34,12 +34,12 @@ describe('Maquininha', () => {
       expect(attributes[name]?.allowNull).toBe(column.allowNull);
     }
 
-    expect(attributes.idTransacao?.primaryKey).toBe(true);
-    expect(attributes.idTransacao?.autoIncrement).toBe(false);
-    expect(attributes.idTransacao?.references).toBeUndefined();
-    expect(attributes.idTransAdquirente?.allowNull).toBe(true);
+    expect(attributes.linha?.primaryKey).toBe(true);
+    expect(attributes.linha?.autoIncrement).toBe(false);
+    expect(attributes.linha?.references).toBeUndefined();
+    expect(attributes.idTransAdquirente?.allowNull).toBe(false);
     expect(attributes.idTransAdquirente?.references).toBeUndefined();
-    expect(attributes.data?.type).toMatchObject({
+    expect(attributes.dataRecibo?.type).toMatchObject({
       key: 'STRING',
       options: { length: 10 },
     });
