@@ -71,6 +71,11 @@ export async function alterRecebimentosDataReciboToVarchar(
 export async function addRecebimentosParcela(
   queryInterface: QueryInterface,
 ): Promise<void> {
+  const columns = await queryInterface.describeTable(RECEBIMENTOS_TABLE);
+  if ('parcela' in columns) {
+    return;
+  }
+
   await queryInterface.addColumn(RECEBIMENTOS_TABLE, 'parcela', {
     type: DataTypes.SMALLINT,
     allowNull: false,
