@@ -38,7 +38,7 @@ services:
     volumes:
       - ./etl-data-back:/app
       - /app/node_modules
-      - ./dados:/dados:ro
+      - ./dados:/dados
     depends_on:
       mysql:
         condition: service_healthy

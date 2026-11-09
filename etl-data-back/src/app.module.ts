@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from './database/database.module.js';
+import { ExportacoesModule } from './exportacoes/exportacoes.module.js';
 import { ErrosModule } from './erros/erros.module.js';
 import { AppController } from './helloWorld/controller/app.controller.js';
 import { AppService } from './helloWorld/service/app.service.js';
@@ -16,6 +17,7 @@ import { TransacoesModule } from './transacoes/transacoes.module.js';
     RecebiveisModule,
     RecebimentosModule,
     RepassesModule,
+    ExportacoesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
